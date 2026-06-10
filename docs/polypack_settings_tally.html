@@ -1,0 +1,586 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;min-height:100vh}
+.frame{max-width:390px;margin:0 auto;background:#fff;min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:#1a2744;color:#fff;padding:14px 16px 10px;display:flex;align-items:center;gap:10px}
+.topbar .back{font-size:20px;cursor:pointer;opacity:.8;user-select:none}
+.topbar .title{font-size:15px;font-weight:600;flex:1}
+.content{flex:1;overflow-y:auto;padding-bottom:16px}
+.bottomnav{background:#1a2744;display:flex;border-top:1px solid #2d3e6b;position:sticky;bottom:0}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0 10px;cursor:pointer;gap:3px;color:#8096c0;font-size:10px;font-weight:500;user-select:none}
+.bnav-item.active{color:#f59e0b}
+.bnav-item svg{width:20px;height:20px}
+.screen{display:none}
+.screen.active{display:block}
+.sec-head{padding:16px 14px 8px;font-size:11px;font-weight:700;color:#8096c0;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between}
+.sec-head span{font-size:11px;color:#3b6fd4;font-weight:600;cursor:pointer;text-transform:none;letter-spacing:0}
+.card{margin:0 12px 12px;background:#fff;border-radius:14px;border:1px solid #e8ecf4;overflow:hidden}
+.card-body{padding:14px}
+.form-group{margin-bottom:13px}
+.form-label{font-size:12px;font-weight:600;color:#4b5c7e;margin-bottom:5px;display:block}
+.form-label .req{color:#ef4444;margin-left:2px}
+.form-input{width:100%;border:1.5px solid #dde3f0;border-radius:10px;padding:10px 12px;font-size:14px;color:#1a2744;background:#f8f9fd;outline:none;transition:border .15s}
+.form-input:focus{border-color:#3b6fd4;background:#fff}
+select.form-input{appearance:none}
+.form-row{display:flex;gap:10px}
+.form-row .form-group{flex:1}
+.btn{width:100%;padding:13px;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.98);opacity:.85}
+.btn-primary{background:#1a2744;color:#fff}
+.btn-yellow{background:#f59e0b;color:#1a2744}
+.btn-outline{background:#fff;color:#1a2744;border:1.5px solid #dde3f0;margin-top:8px}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:8px;width:auto}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;display:inline-block}
+.badge-green{background:#f0fdf4;color:#166534}
+.badge-red{background:#fef2f2;color:#991b1b}
+.badge-yellow{background:#fffbeb;color:#92400e}
+.badge-blue{background:#eff6ff;color:#1e40af}
+.badge-gray{background:#f5f5f4;color:#44403c}
+.status-row{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #f5f6fa;font-size:13px;color:#1a2744}
+.status-row:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-green{background:#22c55e;box-shadow:0 0 0 3px #dcfce7}
+.dot-red{background:#ef4444}
+.dot-yellow{background:#f59e0b}
+.info-row{display:flex;padding:9px 14px;border-bottom:1px solid #f5f6fa;font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:#8096c0;font-size:12px;min-width:110px}
+.info-val{color:#1a2744;font-weight:500;flex:1;font-size:13px}
+.toast{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1a2744;color:#fff;padding:10px 18px;border-radius:22px;font-size:13px;font-weight:500;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+.pill-nav{display:flex;gap:8px;padding:12px 12px 4px;flex-wrap:wrap}
+.pill{padding:7px 14px;border-radius:99px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #dde3f0;color:#4b5c7e;background:#fff;white-space:nowrap}
+.pill.active{background:#1a2744;color:#fff;border-color:#1a2744}
+.tally-table{width:100%;border-collapse:collapse;font-size:12px}
+.tally-table th{background:#f5f6fa;color:#4b5c7e;font-weight:600;padding:8px 10px;text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.tally-table td{padding:9px 10px;border-bottom:1px solid #f5f6fa;color:#1a2744}
+.tally-table tr:last-child td{border-bottom:none}
+.tally-table tr:hover td{background:#fafbfd}
+.conn-status{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#f0fdf4;border-radius:10px;margin-bottom:14px}
+.conn-status.fail{background:#fef2f2}
+.conn-label{font-size:13px;font-weight:600;color:#166534}
+.conn-label.fail{color:#991b1b}
+.conn-sub{font-size:11px;color:#4ade80;margin-top:1px}
+.conn-sub.fail{color:#f87171}
+.eye-btn{background:none;border:none;cursor:pointer;color:#8096c0;padding:0 8px;font-size:16px;position:absolute;right:4px;top:50%;transform:translateY(-50%)}
+.inp-wrap{position:relative}
+.settings-item{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid #f5f6fa;cursor:pointer;gap:12px}
+.settings-item:last-child{border-bottom:none}
+.settings-icon{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.settings-item-info{flex:1}
+.settings-item-title{font-size:13px;font-weight:600;color:#1a2744}
+.settings-item-sub{font-size:11px;color:#8096c0;margin-top:1px}
+.chevron{color:#c0cae0;font-size:16px}
+.greet{background:#1a2744;color:#fff;padding:14px 16px 16px}
+.greet-name{font-size:16px;font-weight:700}
+.greet-sub{font-size:11px;opacity:.6;margin-top:2px}
+</style>
+
+<div class="frame" id="app">
+
+  <!-- SETTINGS MENU -->
+  <div class="screen active" id="screen-settings-menu">
+    <div class="greet">
+      <div class="greet-name">Settings</div>
+      <div class="greet-sub">PolyPack Manufacturing, Indore</div>
+    </div>
+    <div class="content">
+      <div class="sec-head">Company & system</div>
+      <div class="card">
+        <div class="settings-item" onclick="showScreen('screen-company')">
+          <div class="settings-icon" style="background:#eff6ff">🏭</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Company profile</div>
+            <div class="settings-item-sub">Name, address, GSTIN, CST, PAN</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-item" onclick="showScreen('screen-tally-config')">
+          <div class="settings-icon" style="background:#f0fdf4">🔗</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Tally connection</div>
+            <div class="settings-item-sub">IP, port, API key, sync settings</div>
+          </div>
+          <div style="margin-right:8px"><span class="badge badge-green">Connected</span></div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-item" onclick="showScreen('screen-tally-data')">
+          <div class="settings-icon" style="background:#fafaf9">📊</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">View Tally data</div>
+            <div class="settings-item-sub">Orders, ledger, stock from Tally</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-item" onclick="showScreen('screen-sheets-config')">
+          <div class="settings-icon" style="background:#f0fdf4">📋</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Google Sheets</div>
+            <div class="settings-item-sub">Sheet ID, tab names, sync</div>
+          </div>
+          <div style="margin-right:8px"><span class="badge badge-green">Active</span></div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-item" onclick="showScreen('screen-ai-config')">
+          <div class="settings-icon" style="background:#faf5ff">🤖</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">AI assistant</div>
+            <div class="settings-item-sub">API key, language, features</div>
+          </div>
+          <div style="margin-right:8px"><span class="badge badge-green">On</span></div>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+
+      <div class="sec-head">Users & access</div>
+      <div class="card">
+        <div class="settings-item" onclick="showToast('User management — coming soon')">
+          <div class="settings-icon" style="background:#fff7ed">👥</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Manage users</div>
+            <div class="settings-item-sub">Add operators, set roles & permissions</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+        <div class="settings-item" onclick="showToast('Machine master — coming soon')">
+          <div class="settings-icon" style="background:#fef2f2">⚙️</div>
+          <div class="settings-item-info">
+            <div class="settings-item-title">Machine master</div>
+            <div class="settings-item-sub">Add / edit machines and capacity</div>
+          </div>
+          <span class="chevron">›</span>
+        </div>
+      </div>
+      <div style="height:8px"></div>
+    </div>
+    <div class="bottomnav">
+      <div class="bnav-item" onclick="showToast('Go to dashboard')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </div>
+      <div class="bnav-item" onclick="showToast('Log work')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        Log Work
+      </div>
+      <div class="bnav-item" onclick="showToast('Stock')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+        Stock
+      </div>
+      <div class="bnav-item active">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Settings
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPANY PROFILE -->
+  <div class="screen" id="screen-company">
+    <div class="topbar">
+      <span class="back" onclick="showScreen('screen-settings-menu')">←</span>
+      <span class="title">Company profile</span>
+    </div>
+    <div class="content" style="padding:14px">
+
+      <div class="sec-head" style="padding:0 0 8px">Basic details</div>
+      <div class="form-group">
+        <label class="form-label">Company name <span class="req">*</span></label>
+        <input class="form-input" type="text" value="PolyPack Industries"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address line 1 <span class="req">*</span></label>
+        <input class="form-input" type="text" value="Plot 14, Industrial Area, Sector 3"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address line 2</label>
+        <input class="form-input" type="text" value="Sanwer Road"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">City <span class="req">*</span></label>
+          <input class="form-input" type="text" value="Indore"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">State <span class="req">*</span></label>
+          <select class="form-input">
+            <option selected>Madhya Pradesh</option>
+            <option>Maharashtra</option>
+            <option>Gujarat</option>
+            <option>Rajasthan</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">PIN code</label>
+          <input class="form-input" type="text" value="452015"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone</label>
+          <input class="form-input" type="text" value="+91 98765 43210"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" value="accounts@polypack.in"/>
+      </div>
+
+      <div class="sec-head" style="padding:8px 0">Tax & legal</div>
+      <div class="form-group">
+        <label class="form-label">GSTIN <span class="req">*</span></label>
+        <input class="form-input" type="text" placeholder="e.g. 23AAAAA0000A1Z5" value="23ABCDE1234F1Z8" style="font-family:monospace"/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">CST number</label>
+          <input class="form-input" type="text" value="MP/CST/2019/4421" style="font-family:monospace"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PAN</label>
+          <input class="form-input" type="text" value="ABCDE1234F" style="font-family:monospace"/>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">MSME / Udyam no.</label>
+          <input class="form-input" type="text" placeholder="UDYAM-MP-..."/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Financial year start</label>
+          <select class="form-input">
+            <option>April (default)</option>
+            <option>January</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company logo URL (optional)</label>
+        <input class="form-input" type="text" placeholder="https://... or upload later"/>
+      </div>
+
+      <button class="btn btn-primary" onclick="showToast('Company profile saved ✓')">Save changes</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-settings-menu')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- TALLY CONFIG -->
+  <div class="screen" id="screen-tally-config">
+    <div class="topbar">
+      <span class="back" onclick="showScreen('screen-settings-menu')">←</span>
+      <span class="title">Tally connection</span>
+    </div>
+    <div class="content" style="padding:14px">
+
+      <div class="conn-status">
+        <div class="dot dot-green"></div>
+        <div>
+          <div class="conn-label">Connected to Tally Prime</div>
+          <div class="conn-sub">Last sync: today 11:42 AM · 3 orders pulled</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Tally server IP <span class="req">*</span></label>
+        <input class="form-input" type="text" value="192.168.1.105" placeholder="e.g. 192.168.1.100" style="font-family:monospace"/>
+        <div style="font-size:11px;color:#8096c0;margin-top:4px">IP address of the computer running Tally on your local network</div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Port <span class="req">*</span></label>
+          <input class="form-input" type="text" value="9000" style="font-family:monospace"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tally version</label>
+          <select class="form-input">
+            <option>Tally Prime</option>
+            <option>Tally ERP 9</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company name in Tally <span class="req">*</span></label>
+        <input class="form-input" type="text" value="PolyPack Industries" placeholder="Exact name as in Tally"/>
+        <div style="font-size:11px;color:#8096c0;margin-top:4px">Must match exactly — case sensitive</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">API key / token</label>
+        <div class="inp-wrap">
+          <input class="form-input" type="password" id="api-key-input" value="tly_sk_abc123xyz789def" style="font-family:monospace;padding-right:44px"/>
+          <button class="eye-btn" onclick="toggleKey()">👁</button>
+        </div>
+        <div style="font-size:11px;color:#8096c0;margin-top:4px">Leave blank if Tally XML Gateway has no authentication</div>
+      </div>
+
+      <div class="sec-head" style="padding:8px 0 8px">Sync settings</div>
+      <div class="form-group">
+        <label class="form-label">Auto-sync every</label>
+        <select class="form-input">
+          <option>15 minutes</option>
+          <option selected>30 minutes</option>
+          <option>1 hour</option>
+          <option>Manual only</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">What to pull from Tally</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" checked style="width:16px;height:16px"/> Sales orders (pending)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" checked style="width:16px;height:16px"/> Purchase orders</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" checked style="width:16px;height:16px"/> Stock ledger (raw material)</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" style="width:16px;height:16px"/> Party ledger (outstanding)</label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-outline btn-sm" style="flex:1;margin-top:0" onclick="testConnection()">Test connection</button>
+        <button class="btn btn-yellow btn-sm" style="flex:1" onclick="showScreen('screen-tally-data')">View Tally data →</button>
+      </div>
+      <div style="height:10px"></div>
+      <button class="btn btn-primary" onclick="showToast('Tally settings saved ✓')">Save settings</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-settings-menu')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- TALLY DATA VIEWER -->
+  <div class="screen" id="screen-tally-data">
+    <div class="topbar">
+      <span class="back" onclick="showScreen('screen-tally-config')">←</span>
+      <span class="title">Data from Tally</span>
+    </div>
+    <div class="content">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px 0">
+        <div style="font-size:12px;color:#8096c0">Last synced: today 11:42 AM</div>
+        <button class="btn btn-outline btn-sm" style="margin:0;width:auto" onclick="syncNow()">↻ Sync now</button>
+      </div>
+
+      <div class="pill-nav">
+        <div class="pill active" onclick="switchTallyTab(this,'tt-orders')">Sales orders</div>
+        <div class="pill" onclick="switchTallyTab(this,'tt-purchase')">Purchase orders</div>
+        <div class="pill" onclick="switchTallyTab(this,'tt-stock')">Stock</div>
+        <div class="pill" onclick="switchTallyTab(this,'tt-party')">Parties</div>
+      </div>
+
+      <!-- Sales orders -->
+      <div id="tt-orders" style="padding:0 12px">
+        <div class="card" style="margin:8px 0 0">
+          <table class="tally-table">
+            <thead><tr><th>Party</th><th>Item</th><th>Qty</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>Cipla Ltd.</b></td>
+                <td style="color:#8096c0">HDPE bag 200µ</td>
+                <td>5,000 pc</td>
+                <td style="color:#ef4444">11 Jun</td>
+                <td><span class="badge badge-red">Urgent</span></td>
+              </tr>
+              <tr>
+                <td><b>Arvind Mills</b></td>
+                <td style="color:#8096c0">PP sheet 80µ</td>
+                <td>300 kg</td>
+                <td style="color:#d97706">14 Jun</td>
+                <td><span class="badge badge-yellow">Active</span></td>
+              </tr>
+              <tr>
+                <td><b>Sun Pharma</b></td>
+                <td style="color:#8096c0">LDPE wrap 60µ</td>
+                <td>200 kg</td>
+                <td>18 Jun</td>
+                <td><span class="badge badge-blue">Planned</span></td>
+              </tr>
+              <tr>
+                <td><b>Mafatlal Fab.</b></td>
+                <td style="color:#8096c0">HDPE bag 150µ</td>
+                <td>2,000 pc</td>
+                <td>22 Jun</td>
+                <td><span class="badge badge-gray">New</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:#8096c0;padding:8px 2px">4 orders · pulled from Tally sales vouchers</div>
+      </div>
+
+      <!-- Purchase orders -->
+      <div id="tt-purchase" style="display:none;padding:0 12px">
+        <div class="card" style="margin:8px 0 0">
+          <table class="tally-table">
+            <thead><tr><th>Supplier</th><th>Material</th><th>Qty</th><th>Expected</th></tr></thead>
+            <tbody>
+              <tr><td><b>Reliance Poly</b></td><td style="color:#8096c0">HDPE granules</td><td>500 kg</td><td>12 Jun</td></tr>
+              <tr><td><b>Laxmi Traders</b></td><td style="color:#8096c0">PP granules</td><td>800 kg</td><td>15 Jun</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:#8096c0;padding:8px 2px">2 purchase orders pending</div>
+      </div>
+
+      <!-- Stock -->
+      <div id="tt-stock" style="display:none;padding:0 12px">
+        <div class="card" style="margin:8px 0 0">
+          <table class="tally-table">
+            <thead><tr><th>Material</th><th>Tally stock</th><th>System stock</th><th>Diff</th></tr></thead>
+            <tbody>
+              <tr>
+                <td><b>HDPE</b></td>
+                <td>185 kg</td>
+                <td style="color:#ef4444">180 kg</td>
+                <td style="color:#d97706">−5 kg</td>
+              </tr>
+              <tr>
+                <td><b>PP</b></td>
+                <td>640 kg</td>
+                <td style="color:#16a34a">640 kg</td>
+                <td style="color:#16a34a">0</td>
+              </tr>
+              <tr>
+                <td><b>LDPE</b></td>
+                <td>228 kg</td>
+                <td>230 kg</td>
+                <td style="color:#d97706">+2 kg</td>
+              </tr>
+              <tr>
+                <td><b>HD Natural</b></td>
+                <td>510 kg</td>
+                <td style="color:#16a34a">510 kg</td>
+                <td style="color:#16a34a">0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:#8096c0;padding:8px 2px">Tally vs system stock comparison · minor HDPE difference to investigate</div>
+      </div>
+
+      <!-- Parties -->
+      <div id="tt-party" style="display:none;padding:0 12px">
+        <div class="card" style="margin:8px 0 0">
+          <table class="tally-table">
+            <thead><tr><th>Party</th><th>Outstanding</th><th>Overdue</th></tr></thead>
+            <tbody>
+              <tr><td><b>Cipla Ltd.</b></td><td>₹1,24,500</td><td style="color:#ef4444">₹44,000</td></tr>
+              <tr><td><b>Arvind Mills</b></td><td>₹78,200</td><td style="color:#16a34a">—</td></tr>
+              <tr><td><b>Sun Pharma</b></td><td>₹32,000</td><td style="color:#16a34a">—</td></tr>
+              <tr><td><b>Mafatlal Fab.</b></td><td>₹56,800</td><td style="color:#d97706">₹12,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:11px;color:#8096c0;padding:8px 2px">Outstanding amounts from Tally party ledger</div>
+      </div>
+
+      <div style="height:16px"></div>
+    </div>
+  </div>
+
+  <!-- GOOGLE SHEETS CONFIG -->
+  <div class="screen" id="screen-sheets-config">
+    <div class="topbar">
+      <span class="back" onclick="showScreen('screen-settings-menu')">←</span>
+      <span class="title">Google Sheets config</span>
+    </div>
+    <div class="content" style="padding:14px">
+      <div class="conn-status">
+        <div class="dot dot-green"></div>
+        <div>
+          <div class="conn-label">Google Sheets connected</div>
+          <div class="conn-sub">Last write: today 12:10 PM</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Google Sheet ID <span class="req">*</span></label>
+        <input class="form-input" type="text" value="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="font-family:monospace;font-size:11px"/>
+        <div style="font-size:11px;color:#8096c0;margin-top:4px">Found in the Google Sheets URL between /d/ and /edit</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apps Script web URL <span class="req">*</span></label>
+        <input class="form-input" type="text" value="https://script.google.com/macros/s/AKfy..." style="font-family:monospace;font-size:11px"/>
+        <div style="font-size:11px;color:#8096c0;margin-top:4px">Deploy URL from your Google Apps Script project</div>
+      </div>
+      <div class="sec-head" style="padding:8px 0 8px">Sheet tab names</div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Extrusion log</label><input class="form-input" type="text" value="Extrusion_Log"/></div>
+        <div class="form-group"><label class="form-label">Cutting log</label><input class="form-input" type="text" value="Cutting_Log"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Dispatch log</label><input class="form-input" type="text" value="Dispatch_Log"/></div>
+        <div class="form-group"><label class="form-label">Stock master</label><input class="form-input" type="text" value="Stock_Master"/></div>
+      </div>
+      <button class="btn btn-primary" style="margin-top:4px" onclick="showToast('Google Sheets config saved ✓')">Save</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-settings-menu')">Cancel</button>
+    </div>
+  </div>
+
+  <!-- AI CONFIG -->
+  <div class="screen" id="screen-ai-config">
+    <div class="topbar">
+      <span class="back" onclick="showScreen('screen-settings-menu')">←</span>
+      <span class="title">AI assistant settings</span>
+    </div>
+    <div class="content" style="padding:14px">
+      <div class="form-group">
+        <label class="form-label">Anthropic API key <span class="req">*</span></label>
+        <div class="inp-wrap">
+          <input class="form-input" type="password" id="anthro-key" value="sk-ant-api03-xxxxxxxxxxxxxxxx" style="font-family:monospace;font-size:12px;padding-right:44px"/>
+          <button class="eye-btn" onclick="toggleAnthroKey()">👁</button>
+        </div>
+        <div style="font-size:11px;color:#8096c0;margin-top:4px">Get from console.anthropic.com · kept secure, never shared</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Default language</label>
+        <select class="form-input">
+          <option>Hindi + English (Hinglish)</option>
+          <option>English only</option>
+          <option>Hindi only</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">AI features enabled</label>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" checked style="width:16px;height:16px"/> Production planning suggestions</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" checked style="width:16px;height:16px"/> Low stock alerts</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" checked style="width:16px;height:16px"/> Order delay predictions</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#1a2744"><input type="checkbox" style="width:16px;height:16px"/> WhatsApp alert forwarding</label>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="showToast('AI settings saved ✓')">Save</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-settings-menu')">Cancel</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>{s.classList.remove('active');s.style.display='';});
+  const el=document.getElementById(id);
+  if(el){el.style.display='block';el.classList.add('active');}
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+function toggleKey(){
+  const i=document.getElementById('api-key-input');
+  i.type=i.type==='password'?'text':'password';
+}
+function toggleAnthroKey(){
+  const i=document.getElementById('anthro-key');
+  i.type=i.type==='password'?'text':'password';
+}
+function testConnection(){
+  showToast('Testing connection...');
+  setTimeout(()=>showToast('✓ Connected to Tally Prime on 192.168.1.105:9000'),1400);
+}
+function syncNow(){
+  showToast('Syncing from Tally...');
+  setTimeout(()=>showToast('✓ Synced — 4 orders, 4 stock items updated'),1600);
+}
+function switchTallyTab(el,tabId){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  ['tt-orders','tt-purchase','tt-stock','tt-party'].forEach(id=>{
+    const t=document.getElementById(id);
+    if(t)t.style.display=(id===tabId)?'block':'none';
+  });
+}
+</script>

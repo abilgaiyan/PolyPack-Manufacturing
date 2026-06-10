@@ -1,0 +1,1979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#1a2744"/>
+<title>PolyPack</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#1a2744}
+:root{--navy:#1a2744;--navy2:#2d4080;--gold:#f59e0b;--red:#ef4444;--green:#22c55e;--blue:#3b6fd4;--bg:#f0f2f7;--card:#fff;--border:#e4e8f4;--text:#1a2744;--muted:#7c8db5}
+#app{height:100vh;display:flex;flex-direction:column;max-width:430px;margin:0 auto;background:var(--bg);overflow:hidden}
+.screen{display:none;flex-direction:column;height:100%;overflow:hidden}
+.screen.active{display:flex}
+.topbar{background:var(--navy);color:#fff;padding:env(safe-area-inset-top,0) 0 0;flex-shrink:0}
+.topbar-inner{display:flex;align-items:center;gap:10px;padding:13px 16px 11px}
+.topbar-title{font-size:15px;font-weight:700;flex:1}
+.back{font-size:22px;cursor:pointer;line-height:1}
+.tact{font-size:12px;font-weight:600;color:var(--gold);cursor:pointer;white-space:nowrap}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:76px}
+.bnav{background:var(--navy);display:flex;border-top:1px solid #2d3e6b;padding-bottom:env(safe-area-inset-bottom,0);flex-shrink:0}
+.bn{flex:1;display:flex;flex-direction:column;align-items:center;padding:9px 0 10px;cursor:pointer;gap:3px;color:#7c8db5;font-size:10px;font-weight:600;user-select:none}
+.bn.active{color:var(--gold)}
+.bn svg{width:20px;height:20px}
+.sec{padding:14px 14px 6px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;display:flex;justify-content:space-between;align-items:center}
+.sec-act{font-size:11px;color:var(--blue);font-weight:600;text-transform:none;letter-spacing:0;cursor:pointer}
+.card{margin:0 12px 10px;background:var(--card);border-radius:14px;border:1px solid var(--border);overflow:hidden}
+.card-p{padding:14px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 12px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 11px}
+.stat-val{font-size:22px;font-weight:800;color:var(--text)}
+.stat-lbl{font-size:10px;font-weight:600;color:var(--muted);margin-top:2px}
+.hero{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:16px 16px 18px;flex-shrink:0}
+.hero-top{display:flex;align-items:flex-start;justify-content:space-between}
+.hero-name{font-size:17px;font-weight:700}
+.hero-sub{font-size:11px;opacity:.6;margin-top:3px}
+.hero-date{font-size:11px;opacity:.4;margin-top:8px}
+.role-chip{background:rgba(255,255,255,.15);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;color:#fff;margin-top:6px;display:inline-block}
+.logout-btn{background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);font-size:11px;font-weight:600;padding:5px 10px;border-radius:8px;cursor:pointer}
+.alert{margin:10px 12px 0;padding:11px 12px;border-radius:11px;font-size:13px;display:flex;align-items:flex-start;gap:8px;line-height:1.45}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px}
+.a-red{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
+.a-yellow{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
+.a-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid #f4f5fb;gap:10px;cursor:pointer}
+.row:last-child{border-bottom:none}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.row-info{flex:1;min-width:0}
+.row-name{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.row-right{text-align:right;flex-shrink:0}
+.row-val{font-size:13px;font-weight:700;color:var(--text)}
+.badge{font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;display:inline-block;white-space:nowrap}
+.b-red{background:#fef2f2;color:#991b1b}
+.b-yellow{background:#fffbeb;color:#92400e}
+.b-green{background:#f0fdf4;color:#166534}
+.b-blue{background:#eff6ff;color:#1e40af}
+.b-gray{background:#f5f5f4;color:#57534e}
+.mcard{margin:4px 12px;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:12px 13px}
+.mcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.mcard-name{font-size:13px;font-weight:700;color:var(--text)}
+.mcard-op{font-size:11px;color:var(--muted);margin-top:1px}
+.prog-bg{background:#f0f2f8;border-radius:99px;height:5px}
+.prog-fill{height:5px;border-radius:99px;background:var(--blue)}
+.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px}
+.sdot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.s-run{background:var(--green);box-shadow:0 0 0 2px #dcfce7}
+.s-idle{background:var(--gold)}
+.form{padding:14px}
+.fg{margin-bottom:13px}
+.fl{font-size:12px;font-weight:700;color:#4b5c7e;margin-bottom:4px;display:block}
+.req{color:var(--red);margin-left:2px}
+.fi{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:10px 12px;font-size:14px;color:var(--text);background:#f8f9fd;outline:none;transition:border .15s;-webkit-appearance:none;appearance:none}
+.fi:focus{border-color:var(--blue);background:#fff}
+.fi-mono{font-family:monospace;font-size:12px}
+.frow{display:flex;gap:10px}
+.frow .fg{flex:1}
+.hint{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+.btn{width:100%;padding:13px;border:none;border-radius:11px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn-navy{background:var(--navy);color:#fff}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border);margin-top:8px}
+.btn-red{background:#ef4444;color:#fff}
+.btn-sm{padding:9px 14px;font-size:13px;border-radius:8px;width:auto}
+.btn-row{display:flex;gap:8px;margin-top:4px}
+.btn-row .btn{flex:1}
+.tabs{display:flex;margin:12px;background:#eef0f8;border-radius:9px;padding:3px}
+.tab{flex:1;text-align:center;padding:7px 2px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;border-radius:7px;user-select:none}
+.tab.active{background:#fff;color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.pills{display:flex;gap:7px;padding:10px 12px 4px;overflow-x:auto;scrollbar-width:none}
+.pills::-webkit-scrollbar{display:none}
+.pill{padding:7px 13px;border-radius:99px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);color:#4b5c7e;background:#fff;white-space:nowrap;flex-shrink:0}
+.pill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:360px}
+th{background:#f4f6fb;color:#4b5c7e;font-weight:700;padding:8px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #f4f5fb;color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.sitem{display:flex;align-items:center;padding:13px 14px;border-bottom:1px solid #f4f5fb;cursor:pointer;gap:12px}
+.sitem:last-child{border-bottom:none}
+.sicon{width:35px;height:35px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sinfo{flex:1}
+.sinfo-title{font-size:13px;font-weight:700;color:var(--text)}
+.sinfo-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.chev{color:#c0cae0;font-size:18px}
+.conn{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;margin-bottom:13px}
+.conn-ok{background:#f0fdf4;border:1px solid #bbf7d0}
+.conn-fail{background:#fef2f2;border:1px solid #fecaca}
+.conn-lbl{font-size:13px;font-weight:700}
+.conn-lbl-ok{color:#166534}
+.conn-lbl-fail{color:#991b1b}
+.conn-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.inp-wrap{position:relative}
+.eye{background:none;border:none;cursor:pointer;color:var(--muted);padding:0 10px;position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:15px}
+.mitem{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #f4f5fb;gap:10px}
+.mitem:last-child{border-bottom:none}
+.mitem-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:#f0f2f8}
+.mitem-info{flex:1;min-width:0}
+.mitem-name{font-size:13px;font-weight:700;color:var(--text)}
+.mitem-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.mitem-del{background:none;border:none;color:#ef4444;font-size:18px;cursor:pointer;padding:4px 6px}
+.mitem-edit{background:none;border:none;color:#3b6fd4;font-size:16px;cursor:pointer;padding:4px 6px}
+/* LOGIN */
+#login-screen{position:fixed;inset:0;background:var(--navy);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;padding:24px}
+#login-screen.hide{display:none}
+.login-logo{font-size:44px;margin-bottom:6px}
+.login-title{font-size:24px;font-weight:800;color:#fff;margin-bottom:3px}
+.login-sub{font-size:13px;color:rgba(255,255,255,.5);margin-bottom:28px;text-align:center;line-height:1.5}
+.login-card{background:#fff;border-radius:18px;padding:20px;width:100%;max-width:340px}
+.login-label{font-size:12px;font-weight:700;color:#4b5c7e;margin-bottom:5px;display:block}
+.login-sel{width:100%;border:1.5px solid var(--border);border-radius:9px;padding:11px 13px;font-size:14px;color:var(--text);background:#f8f9fd;outline:none;margin-bottom:14px;-webkit-appearance:none}
+.pin-row{display:flex;gap:10px;justify-content:center;margin-bottom:16px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:#e0e4f0;transition:background .15s}
+.pin-dot.filled{background:var(--navy)}
+.numpad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.nkey{background:#f0f2f8;border:none;border-radius:10px;padding:14px;font-size:18px;font-weight:700;cursor:pointer;color:var(--text)}
+.nkey:active{background:#dde3f0;transform:scale(.95)}
+.login-err{color:#ef4444;font-size:12px;text-align:center;margin-top:8px;min-height:18px}
+.setup-hint{font-size:11px;color:rgba(255,255,255,.35);margin-top:16px;text-align:center;line-height:1.5}
+/* TOAST */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--navy);color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:600;z-index:999;opacity:0;transition:all .25s;pointer-events:none;white-space:nowrap;max-width:92vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.spinner{width:28px;height:28px;border:3px solid #e0e4f0;border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:24px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:32px 20px}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-msg{font-size:13px;color:var(--muted)}
+.fy-card{margin:0 12px 8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px;display:flex;align-items:center;gap:12px}
+.fy-icon{font-size:22px;width:38px;text-align:center;flex-shrink:0}
+.fy-info{flex:1}
+.fy-label{font-size:14px;font-weight:800;color:var(--text)}
+.fy-range{font-size:11px;color:var(--muted);margin-top:2px}
+/* role-based visibility */
+.mgr-only{display:none}
+.acc-only{display:none}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN SCREEN ══════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-logo">🏭</div>
+  <div class="login-title">PolyPack</div>
+  <div class="login-sub">Select your name &amp; enter your 4-digit PIN</div>
+  <div class="login-card">
+    <label class="login-label">Who are you?</label>
+    <select class="login-sel" id="login-who">
+      <option value="">— Select your name —</option>
+    </select>
+    <div class="pin-row">
+      <div class="pin-dot" id="pd0"></div>
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="numpad">
+      <button class="nkey" onclick="pinKey('1')">1</button>
+      <button class="nkey" onclick="pinKey('2')">2</button>
+      <button class="nkey" onclick="pinKey('3')">3</button>
+      <button class="nkey" onclick="pinKey('4')">4</button>
+      <button class="nkey" onclick="pinKey('5')">5</button>
+      <button class="nkey" onclick="pinKey('6')">6</button>
+      <button class="nkey" onclick="pinKey('7')">7</button>
+      <button class="nkey" onclick="pinKey('8')">8</button>
+      <button class="nkey" onclick="pinKey('9')">9</button>
+      <button class="nkey" onclick="pinKey('clear')" style="font-size:12px">CLR</button>
+      <button class="nkey" onclick="pinKey('0')">0</button>
+      <button class="nkey nkey-del" onclick="pinKey('del')">⌫</button>
+    </div>
+    <div class="login-err" id="login-err"></div>
+  </div>
+  <div class="setup-hint">Demo PINs — Manager: 1111 · Operator: 2222 · Accountant: 6666</div>
+</div>
+
+<div id="app">
+
+<!-- ═══ DASHBOARD ════════════════════════════════════════════ -->
+<div class="screen active" id="s-dash">
+  <div class="topbar"><div class="topbar-inner">
+    <div style="flex:1">
+      <div class="topbar-title" id="greet-name">PolyPack</div>
+      <div style="font-size:11px;opacity:.6;margin-top:1px" id="co-display"></div>
+    </div>
+    <button class="logout-btn" onclick="doLogout()">Logout</button>
+  </div></div>
+  <div class="scroll">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div style="font-size:11px;opacity:.5" id="today-date"></div>
+          <div class="role-chip" id="role-chip">—</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;opacity:.5">Financial year</div>
+          <div style="font-size:13px;font-weight:700;margin-top:2px" id="fy-display">—</div>
+        </div>
+      </div>
+    </div>
+    <div id="dash-alerts"></div>
+    <div class="sec">Today <span class="sec-act" onclick="refreshDash()">↻ Refresh</span></div>
+    <div class="stats">
+      <div class="stat"><div class="stat-val" id="st-ext">—</div><div class="stat-lbl">kg extruded</div></div>
+      <div class="stat"><div class="stat-val" id="st-bags">—</div><div class="stat-lbl">bags cut</div></div>
+      <div class="stat"><div class="stat-val" id="st-mc">—</div><div class="stat-lbl">machines active</div></div>
+      <div class="stat"><div class="stat-val" id="st-ord">—</div><div class="stat-lbl">pending orders</div></div>
+    </div>
+    <div class="sec" id="mc-sec">Machine status</div>
+    <div id="machine-list"></div>
+    <div class="sec">Pending orders <span class="sec-act" onclick="nav('s-orders')">See all</span></div>
+    <div class="card" id="order-preview"></div>
+    <div style="height:4px"></div>
+  </div>
+  <div class="bnav" id="main-bnav">
+    <div class="bn active" onclick="nav('s-dash')" id="bn-dash">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Home
+    </div>
+    <div class="bn" onclick="nav('s-log')" id="bn-log">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>Log Work
+    </div>
+    <div class="bn" onclick="nav('s-stock')" id="bn-stock">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>Stock
+    </div>
+    <div class="bn" onclick="nav('s-reports')" id="bn-rep">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>Reports
+    </div>
+    <div class="bn" onclick="nav('s-settings')" id="bn-set">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>Settings
+    </div>
+  </div>
+</div>
+
+<!-- ═══ LOG WORK ════════════════════════════════════════════ -->
+<div class="screen" id="s-log">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-dash')">←</span>
+    <span class="topbar-title">Log production work</span>
+  </div></div>
+  <div class="scroll">
+    <div class="tabs" id="log-tabs">
+      <div class="tab active" onclick="switchTab(this,'t-ext')">Extrusion</div>
+      <div class="tab" onclick="switchTab(this,'t-cut')">Cutting</div>
+      <div class="tab" id="tab-dis" onclick="switchTab(this,'t-dis')">Dispatch</div>
+      <div class="tab" id="tab-att" onclick="switchTab(this,'t-att')">Attendance</div>
+    </div>
+    <!-- Extrusion -->
+    <div id="t-ext" class="form">
+      <div class="fg"><label class="fl">Operator <span class="req">*</span></label>
+        <select class="fi" id="ext-op"><option value="">— Select —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Machine <span class="req">*</span></label>
+          <select class="fi" id="ext-machine"><option value="">— Select —</option></select></div>
+        <div class="fg"><label class="fl">Shift</label>
+          <select class="fi" id="ext-shift"><option>Morning</option><option>Afternoon</option><option>Night</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Material <span class="req">*</span></label>
+        <select class="fi" id="ext-mat"><option value="">— Select —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Consumed (kg)</label><input class="fi" id="ext-consumed" type="number" min="0" placeholder="150"/></div>
+        <div class="fg"><label class="fl">Output (kg)</label><input class="fi" id="ext-output" type="number" min="0" placeholder="142"/></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Width (mm)</label><input class="fi" id="ext-width" type="number" min="0" placeholder="600"/></div>
+        <div class="fg"><label class="fl">Thickness (µ)</label><input class="fi" id="ext-thick" type="number" min="0" placeholder="200"/></div>
+      </div>
+      <div class="fg"><label class="fl">Wastage (kg)</label><input class="fi" id="ext-waste" type="number" min="0" placeholder="5"/></div>
+      <div class="fg"><label class="fl">Remarks</label><input class="fi" id="ext-rem" type="text" placeholder="Any issue or note"/></div>
+      <button class="btn btn-navy" onclick="submitExtrusion()">Save to Google Sheets ✓</button>
+      <button class="btn btn-outline" onclick="nav('s-dash')">Cancel</button>
+    </div>
+    <!-- Cutting -->
+    <div id="t-cut" class="form" style="display:none">
+      <div class="fg"><label class="fl">Operator <span class="req">*</span></label>
+        <select class="fi" id="cut-op"><option value="">— Select —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Machine</label>
+          <select class="fi" id="cut-machine"><option value="">— Select —</option></select></div>
+        <div class="fg"><label class="fl">Shift</label>
+          <select class="fi" id="cut-shift"><option>Morning</option><option>Afternoon</option><option>Night</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Roll from extruder</label>
+        <select class="fi" id="cut-src"><option value="">— Select —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Bag size (cm)</label><input class="fi" id="cut-size" type="text" placeholder="30×45"/></div>
+        <div class="fg"><label class="fl">Bags produced</label><input class="fi" id="cut-bags" type="number" min="0" placeholder="1200"/></div>
+      </div>
+      <div class="fg"><label class="fl">Wastage (kg)</label><input class="fi" id="cut-waste" type="number" min="0" placeholder="3"/></div>
+      <div class="fg"><label class="fl">Client order</label>
+        <select class="fi" id="cut-client"><option value="">— Select —</option></select></div>
+      <div class="fg"><label class="fl">Remarks</label><input class="fi" id="cut-rem" type="text" placeholder="Any note"/></div>
+      <button class="btn btn-navy" onclick="submitCutting()">Save to Google Sheets ✓</button>
+      <button class="btn btn-outline" onclick="nav('s-dash')">Cancel</button>
+    </div>
+    <!-- Dispatch -->
+    <div id="t-dis" class="form" style="display:none">
+      <div class="fg"><label class="fl">Client <span class="req">*</span></label>
+        <select class="fi" id="dis-client"><option value="">— Select —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Quantity <span class="req">*</span></label><input class="fi" id="dis-qty" type="number" min="0" placeholder="5000"/></div>
+        <div class="fg"><label class="fl">Unit</label>
+          <select class="fi" id="dis-unit"><option>pcs</option><option>kg</option><option>rolls</option></select></div>
+      </div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Vehicle no.</label><input class="fi" id="dis-veh" type="text" placeholder="MP09AB1234"/></div>
+        <div class="fg"><label class="fl">Driver name</label><input class="fi" id="dis-drv" type="text" placeholder="Driver"/></div>
+      </div>
+      <div class="fg"><label class="fl">Challan / DO no.</label><input class="fi" id="dis-ch" type="text" placeholder="Tally challan number"/></div>
+      <div class="fg"><label class="fl">Gatekeeper <span class="req">*</span></label>
+        <select class="fi" id="dis-gate"><option value="">— Select —</option></select></div>
+      <div class="fg"><label class="fl">Remarks</label><input class="fi" id="dis-rem" type="text" placeholder="Any note"/></div>
+      <button class="btn btn-gold" onclick="submitDispatch()">Record Dispatch ✓</button>
+      <button class="btn btn-outline" onclick="nav('s-dash')">Cancel</button>
+    </div>
+    <!-- Attendance -->
+    <div id="t-att" class="form" style="display:none">
+      <div class="fg"><label class="fl">Employee <span class="req">*</span></label>
+        <select class="fi" id="att-emp"><option value="">— Select —</option></select></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Shift</label>
+          <select class="fi" id="att-shift"><option>Morning</option><option>Afternoon</option><option>Night</option></select></div>
+        <div class="fg"><label class="fl">Status</label>
+          <select class="fi" id="att-status"><option>Present</option><option>Absent</option><option>Half Day</option><option>Late</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">In time</label><input class="fi" id="att-in" type="time"/></div>
+      <div class="fg"><label class="fl">Remarks</label><input class="fi" id="att-rem" type="text" placeholder="Any note"/></div>
+      <button class="btn btn-navy" onclick="submitAttendance()">Mark Attendance ✓</button>
+      <button class="btn btn-outline" onclick="nav('s-dash')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ STOCK ════════════════════════════════════════════════ -->
+<div class="screen" id="s-stock">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-dash')">←</span>
+    <span class="topbar-title">Raw material stock</span>
+    <span class="tact" onclick="loadStock()">↻ Refresh</span>
+  </div></div>
+  <div class="scroll">
+    <div class="sec">Current levels</div>
+    <div class="card" id="stock-list"><div class="spinner"></div></div>
+    <div class="sec">Add stock (GRN)</div>
+    <div class="card card-p">
+      <div class="frow" style="margin-bottom:10px">
+        <div class="fg"><label class="fl">Material</label>
+          <select class="fi" id="grn-mat"><option value="">— Select —</option></select></div>
+        <div class="fg"><label class="fl">Qty (kg)</label><input class="fi" id="grn-qty" type="number" min="0" placeholder="500"/></div>
+      </div>
+      <div class="fg" style="margin-bottom:12px"><label class="fl">Added by</label>
+        <select class="fi" id="grn-by"><option value="">— Select —</option></select></div>
+      <button class="btn btn-gold btn-sm" onclick="addStock()">+ Add to stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ORDERS ═══════════════════════════════════════════════ -->
+<div class="screen" id="s-orders">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-dash')">←</span>
+    <span class="topbar-title">Orders from Tally</span>
+    <span class="tact" onclick="loadOrders()">↻ Sync</span>
+  </div></div>
+  <div class="scroll">
+    <div class="pills">
+      <div class="pill active" onclick="filterOrders('all',this)">All</div>
+      <div class="pill" onclick="filterOrders('Pending',this)">Pending</div>
+      <div class="pill" onclick="filterOrders('In Progress',this)">In Progress</div>
+      <div class="pill" onclick="filterOrders('Ready',this)">Ready</div>
+    </div>
+    <div class="card" style="margin-top:8px" id="orders-list"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- ═══ REPORTS ══════════════════════════════════════════════ -->
+<div class="screen" id="s-reports">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-dash')">←</span>
+    <span class="topbar-title">Reports &amp; archive</span>
+  </div></div>
+  <div class="scroll">
+    <div class="pills">
+      <div class="pill active" onclick="switchRep(this,'rp-fy')">Financial years</div>
+      <div class="pill" onclick="switchRep(this,'rp-prod')">Production</div>
+      <div class="pill" onclick="switchRep(this,'rp-dis')">Dispatch</div>
+    </div>
+    <div id="rp-fy">
+      <div class="sec">All financial years</div>
+      <div id="fy-list"></div>
+      <div class="sec">Archive year-end data</div>
+      <div class="card card-p">
+        <div style="font-size:13px;color:var(--text);line-height:1.55;margin-bottom:12px">
+          Moves completed FY data to protected archive sheets.<br>
+          <b>FY: 01 April – 31 March.</b> Auto-archive runs April 1 at 1 AM.
+        </div>
+        <div class="fg" style="margin-bottom:12px">
+          <label class="fl">FY to archive</label>
+          <select class="fi" id="arch-sel"><option>—</option></select>
+        </div>
+        <div class="alert a-yellow" style="margin:0 0 12px"><div class="alert-icon">⚠️</div><div>Rows move to read-only sheets. Cannot be undone easily.</div></div>
+        <button class="btn btn-outline btn-sm" onclick="doArchive()">Archive selected FY →</button>
+      </div>
+    </div>
+    <div id="rp-prod" style="display:none">
+      <div class="sec">Production summary</div>
+      <div class="fg" style="padding:0 12px 8px">
+        <select class="fi" id="rep-fy" onchange="loadProdReport()"><option>FY2526</option></select></div>
+      <div id="prod-rep"></div>
+    </div>
+    <div id="rp-dis" style="display:none">
+      <div class="sec">Dispatch summary</div>
+      <div class="fg" style="padding:0 12px 8px">
+        <select class="fi" id="rep-dis-fy" onchange="loadDisReport()"><option>FY2526</option></select></div>
+      <div id="dis-rep"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SETTINGS ═════════════════════════════════════════════ -->
+<div class="screen" id="s-settings">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-dash')">←</span>
+    <span class="topbar-title">Settings</span>
+  </div></div>
+  <div class="scroll">
+    <div class="sec">Master data</div>
+    <div class="card">
+      <div class="sitem" onclick="nav('s-master-emp')"><div class="sicon" style="background:#fff7ed">👤</div><div class="sinfo"><div class="sinfo-title">Employees</div><div class="sinfo-sub" id="emp-count-lbl">Operators, managers, staff</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-master-mc')"><div class="sicon" style="background:#eff6ff">⚙️</div><div class="sinfo"><div class="sinfo-title">Machines</div><div class="sinfo-sub" id="mc-count-lbl">Extruders, cutting machines</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-master-mat')"><div class="sicon" style="background:#f0fdf4">🧪</div><div class="sinfo"><div class="sinfo-title">Material types</div><div class="sinfo-sub" id="mat-count-lbl">HDPE, LDPE, PP etc.</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-master-client')"><div class="sicon" style="background:#faf5ff">🏢</div><div class="sinfo"><div class="sinfo-title">Clients</div><div class="sinfo-sub" id="client-count-lbl">Cipla, Arvind Mills etc.</div></div><span class="chev">›</span></div>
+    </div>
+    <div class="sec">Company &amp; connections</div>
+    <div class="card">
+      <div class="sitem" onclick="nav('s-company')"><div class="sicon" style="background:#eff6ff">🏭</div><div class="sinfo"><div class="sinfo-title">Company profile</div><div class="sinfo-sub">Name, address, GSTIN, CST, PAN</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-tally')"><div class="sicon" style="background:#f0fdf4">🔗</div><div class="sinfo"><div class="sinfo-title">Tally connection</div><div class="sinfo-sub">IP, port, company name</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-sheets')"><div class="sicon" style="background:#f0fdf4">📋</div><div class="sinfo"><div class="sinfo-title">Google Sheets</div><div class="sinfo-sub">Script URL, sheet names</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-ai')"><div class="sicon" style="background:#faf5ff">🤖</div><div class="sinfo"><div class="sinfo-title">AI assistant</div><div class="sinfo-sub">Anthropic key, language</div></div><span class="chev">›</span></div>
+    </div>
+    <div class="sec">Current FY &amp; demo</div>
+    <div class="card card-p">
+      <div style="font-size:13px;color:var(--text);margin-bottom:8px">Active: <b id="cur-fy">—</b> &nbsp;|&nbsp; 01 April – 31 March</div>
+      <div class="btn-row">
+        <button class="btn btn-outline btn-sm" style="margin:0" onclick="resetDemoData()">↻ Reset demo data</button>
+        <button class="btn btn-red btn-sm" style="margin:0" onclick="doLogout()">Logout</button>
+      </div>
+    </div>
+    <div style="height:8px"></div>
+  </div>
+</div>
+
+<!-- ═══ MASTER: EMPLOYEES ════════════════════════════════════ -->
+<div class="screen" id="s-master-emp">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Employees</span>
+    <span class="tact" onclick="showAddEmp()">+ Add</span>
+  </div></div>
+  <div class="scroll">
+    <div class="card" id="emp-list"></div>
+    <div class="card card-p" id="add-emp-form" style="display:none">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Add new employee</div>
+      <div class="fg"><label class="fl">Full name <span class="req">*</span></label><input class="fi" id="emp-name" type="text" placeholder="e.g. Ramesh Kumar"/></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Role <span class="req">*</span></label>
+          <select class="fi" id="emp-role">
+            <option>Extrusion Operator</option><option>Cutting Operator</option>
+            <option>Manager</option><option>Accountant</option>
+            <option>Gatekeeper</option><option>Helper</option>
+          </select></div>
+        <div class="fg"><label class="fl">Gender</label>
+          <select class="fi" id="emp-gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+      </div>
+      <div class="fg"><label class="fl">Phone</label><input class="fi" id="emp-phone" type="tel" placeholder="+91 9876543210"/></div>
+      <div class="fg"><label class="fl">PIN (4 digits) <span class="req">*</span></label>
+        <input class="fi" id="emp-pin" type="password" maxlength="4" placeholder="e.g. 1234"/>
+        <div class="hint" id="emp-pin-hint">Employee uses this PIN to login on shared device</div></div>
+      <div class="fg"><label class="fl">Assigned machine</label>
+        <select class="fi" id="emp-mc"><option value="">— None —</option></select></div>
+      <div class="btn-row">
+        <button class="btn btn-navy btn-sm" id="save-emp-btn" onclick="saveEmployee()">Save employee</button>
+        <button class="btn btn-outline btn-sm" onclick="hideAddEmp()" style="margin:0">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MASTER: MACHINES ═════════════════════════════════════ -->
+<div class="screen" id="s-master-mc">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Machines</span>
+    <span class="tact" onclick="showAddMc()">+ Add</span>
+  </div></div>
+  <div class="scroll">
+    <div class="card" id="mc-list"></div>
+    <div class="card card-p" id="add-mc-form" style="display:none">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Add new machine</div>
+      <div class="fg"><label class="fl">Machine name <span class="req">*</span></label><input class="fi" id="mc-name" type="text" placeholder="e.g. Extruder 3"/></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Type <span class="req">*</span></label>
+          <select class="fi" id="mc-type"><option>Extruder</option><option>Cutting & Sealing</option><option>Printing</option><option>Other</option></select></div>
+        <div class="fg"><label class="fl">Capacity (kg/shift)</label><input class="fi" id="mc-cap" type="number" min="0" placeholder="400"/></div>
+      </div>
+      <div class="fg"><label class="fl">Status</label>
+        <select class="fi" id="mc-status"><option>Active</option><option>Under Maintenance</option><option>Inactive</option></select></div>
+      <div class="fg"><label class="fl">Remarks</label><input class="fi" id="mc-rem" type="text" placeholder="Grade, notes"/></div>
+      <div class="btn-row">
+        <button class="btn btn-navy btn-sm" id="save-mc-btn" onclick="saveMachine()">Save machine</button>
+        <button class="btn btn-outline btn-sm" onclick="hideAddMc()" style="margin:0">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MASTER: MATERIALS ════════════════════════════════════ -->
+<div class="screen" id="s-master-mat">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Material types</span>
+    <span class="tact" onclick="showAddMat()">+ Add</span>
+  </div></div>
+  <div class="scroll">
+    <div class="card" id="mat-list"></div>
+    <div class="card card-p" id="add-mat-form" style="display:none">
+      <div class="fg"><label class="fl">Material name <span class="req">*</span></label><input class="fi" id="mat-name" type="text" placeholder="e.g. HDPE"/></div>
+      <div class="frow">
+        <div class="fg"><label class="fl">Min stock alert (kg)</label><input class="fi" id="mat-min" type="number" min="0" placeholder="200"/></div>
+        <div class="fg"><label class="fl">Unit</label>
+          <select class="fi" id="mat-unit"><option>kg</option><option>MT</option></select></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-navy btn-sm" id="save-mat-btn" onclick="saveMaterial()">Save material</button>
+        <button class="btn btn-outline btn-sm" onclick="hideAddMat()" style="margin:0">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MASTER: CLIENTS ══════════════════════════════════════ -->
+<div class="screen" id="s-master-client">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Clients</span>
+    <span class="tact" onclick="showAddClient()">+ Add</span>
+  </div></div>
+  <div class="scroll">
+    <div class="card" id="client-list"></div>
+    <div class="card card-p" id="add-client-form" style="display:none">
+      <div class="fg"><label class="fl">Client name <span class="req">*</span></label><input class="fi" id="cl-name" type="text" placeholder="e.g. Cipla Ltd."/></div>
+      <div class="fg"><label class="fl">Industry</label>
+        <select class="fi" id="cl-ind"><option>Pharmaceutical</option><option>Garments/Textile</option><option>Food</option><option>Industrial</option><option>Other</option></select></div>
+      <div class="fg"><label class="fl">Contact person</label><input class="fi" id="cl-contact" type="text" placeholder="Name"/></div>
+      <div class="fg"><label class="fl">Phone</label><input class="fi" id="cl-phone" type="tel" placeholder="+91..."/></div>
+      <div class="fg"><label class="fl">GSTIN</label><input class="fi fi-mono" id="cl-gstin" type="text" placeholder="Client GSTIN"/></div>
+      <div class="btn-row">
+        <button class="btn btn-navy btn-sm" id="save-client-btn" onclick="saveClient()">Save client</button>
+        <button class="btn btn-outline btn-sm" onclick="hideAddClient()" style="margin:0">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ COMPANY PROFILE ══════════════════════════════════════ -->
+<div class="screen" id="s-company">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Company profile</span>
+  </div></div>
+  <div class="scroll"><div class="form">
+    <div class="fg"><label class="fl">Company name <span class="req">*</span></label><input class="fi" id="co-name" type="text" placeholder="PolyPack Industries"/></div>
+    <div class="fg"><label class="fl">Address line 1</label><input class="fi" id="co-a1" type="text" placeholder="Plot no., Area"/></div>
+    <div class="fg"><label class="fl">Address line 2</label><input class="fi" id="co-a2" type="text" placeholder="Road, Locality"/></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">City</label><input class="fi" id="co-city" type="text" placeholder="Indore"/></div>
+      <div class="fg"><label class="fl">State</label>
+        <select class="fi" id="co-state"><option>Madhya Pradesh</option><option>Maharashtra</option><option>Gujarat</option><option>Rajasthan</option><option>Uttar Pradesh</option><option>Delhi</option><option>Karnataka</option><option>Tamil Nadu</option></select></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label class="fl">PIN</label><input class="fi" id="co-pin" type="text" maxlength="6" placeholder="452015"/></div>
+      <div class="fg"><label class="fl">Phone</label><input class="fi" id="co-phone" type="tel" placeholder="+91 98765 43210"/></div>
+    </div>
+    <div class="fg"><label class="fl">Email</label><input class="fi" id="co-email" type="email" placeholder="accounts@company.in"/></div>
+    <div class="fg"><label class="fl">GSTIN</label><input class="fi fi-mono" id="co-gstin" type="text" placeholder="23AAAAA0000A1Z5" maxlength="15"/></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">CST number</label><input class="fi fi-mono" id="co-cst" type="text" placeholder="MP/CST/..."/></div>
+      <div class="fg"><label class="fl">PAN</label><input class="fi fi-mono" id="co-pan" type="text" placeholder="AAAAA0000A" maxlength="10"/></div>
+    </div>
+    <div class="fg"><label class="fl">MSME / Udyam no.</label><input class="fi" id="co-udyam" type="text" placeholder="UDYAM-MP-..."/></div>
+    <button class="btn btn-navy" onclick="saveCompany()">Save company profile</button>
+    <button class="btn btn-outline" onclick="nav('s-settings')">Cancel</button>
+  </div></div>
+</div>
+
+<!-- ═══ TALLY CONFIG ═════════════════════════════════════════ -->
+<div class="screen" id="s-tally">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Tally connection</span>
+  </div></div>
+  <div class="scroll"><div class="form">
+    <div class="conn conn-fail" id="tally-conn-status">
+      <div class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
+      <div><div class="conn-lbl conn-lbl-fail">Not tested</div><div class="conn-sub">Tap Test below</div></div>
+    </div>
+    <div class="fg"><label class="fl">Tally server IP <span class="req">*</span></label><input class="fi fi-mono" id="t-ip" type="text" placeholder="192.168.1.105"/><div class="hint">IP of computer running Tally (same WiFi/LAN)</div></div>
+    <div class="frow">
+      <div class="fg"><label class="fl">Port</label><input class="fi fi-mono" id="t-port" type="text" value="9000"/></div>
+      <div class="fg"><label class="fl">Version</label>
+        <select class="fi" id="t-ver"><option>Tally Prime</option><option>Tally ERP 9</option></select></div>
+    </div>
+    <div class="fg"><label class="fl">Company name in Tally <span class="req">*</span></label><input class="fi" id="t-co" type="text" placeholder="Exact name — case sensitive"/></div>
+    <div class="fg"><label class="fl">API key (if any)</label>
+      <div class="inp-wrap"><input class="fi fi-mono" id="t-key" type="password" placeholder="Leave blank if not needed"/><button class="eye" onclick="toggleEye('t-key')">👁</button></div></div>
+    <div class="fg"><label class="fl">Auto-sync</label>
+      <select class="fi" id="t-sync"><option>15 minutes</option><option selected>30 minutes</option><option>1 hour</option><option>Manual only</option></select></div>
+    <div class="btn-row">
+      <button class="btn btn-outline btn-sm" style="margin:0" onclick="testTally()">Test connection</button>
+      <button class="btn btn-gold btn-sm" onclick="nav('s-tally-data')">View Tally data →</button>
+    </div>
+    <div style="height:10px"></div>
+    <button class="btn btn-navy" onclick="saveTally()">Save settings</button>
+    <button class="btn btn-outline" onclick="nav('s-settings')">Cancel</button>
+  </div></div>
+</div>
+
+<!-- ═══ TALLY DATA VIEWER ════════════════════════════════════ -->
+<div class="screen" id="s-tally-data">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-tally')">←</span>
+    <span class="topbar-title">Data from Tally</span>
+    <span class="tact" onclick="syncTally()">↻ Sync</span>
+  </div></div>
+  <div class="scroll">
+    <div style="padding:10px 14px 0;font-size:11px;color:var(--muted)" id="tally-sync-time">Last sync: —</div>
+    <div class="pills">
+      <div class="pill active" onclick="switchTally(this,'tv-ord')">Sales orders</div>
+      <div class="pill" onclick="switchTally(this,'tv-po')">Purchase orders</div>
+      <div class="pill" onclick="switchTally(this,'tv-stk')">Stock</div>
+      <div class="pill" onclick="switchTally(this,'tv-par')">Parties</div>
+    </div>
+    <div id="tv-ord" class="card" style="margin-top:8px"><div class="tbl"><table>
+      <thead><tr><th>Party</th><th>Material</th><th>Qty</th><th>Due</th><th>Status</th></tr></thead>
+      <tbody id="tv-ord-body"></tbody>
+    </table></div></div>
+    <div id="tv-po" style="display:none" class="card" style="margin-top:8px"><div class="tbl"><table>
+      <thead><tr><th>Supplier</th><th>Material</th><th>Qty</th><th>Expected</th></tr></thead>
+      <tbody><tr><td colspan="4" style="text-align:center;padding:20px;color:var(--muted)">No pending POs</td></tr></tbody>
+    </table></div></div>
+    <div id="tv-stk" style="display:none" class="card" style="margin-top:8px"><div class="tbl"><table>
+      <thead><tr><th>Material</th><th>Tally</th><th>System</th><th>Diff</th></tr></thead>
+      <tbody id="tv-stk-body"></tbody>
+    </table></div></div>
+    <div id="tv-par" style="display:none" class="card" style="margin-top:8px"><div class="tbl"><table>
+      <thead><tr><th>Party</th><th>Outstanding</th><th>Overdue</th></tr></thead>
+      <tbody><tr><td colspan="3" style="text-align:center;padding:20px;color:var(--muted)">Connect Tally to load</td></tr></tbody>
+    </table></div></div>
+    <div style="height:12px"></div>
+  </div>
+</div>
+
+<!-- ═══ GOOGLE SHEETS ════════════════════════════════════════ -->
+<div class="screen" id="s-sheets">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Google Sheets</span>
+  </div></div>
+  <div class="scroll"><div class="form">
+    <div class="fg"><label class="fl">Apps Script URL <span class="req">*</span></label>
+      <input class="fi fi-mono" id="sh-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:11px"/>
+      <div class="hint">Deploy URL from Apps Script → Deploy → Web app</div></div>
+    <div class="fg"><label class="fl">Google Sheet ID</label>
+      <input class="fi fi-mono" id="sh-id" type="text" placeholder="Sheet ID from URL" style="font-size:11px"/></div>
+    <button class="btn btn-navy" onclick="saveSheets()">Save</button>
+    <button class="btn btn-outline" onclick="nav('s-settings')">Cancel</button>
+  </div></div>
+</div>
+
+<!-- ═══ AI SETTINGS ══════════════════════════════════════════ -->
+<div class="screen" id="s-ai">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">AI assistant</span>
+  </div></div>
+  <div class="scroll"><div class="form">
+    <div class="fg"><label class="fl">Anthropic API key</label>
+      <div class="inp-wrap"><input class="fi fi-mono" id="ai-key" type="password" placeholder="sk-ant-api03-..." style="font-size:12px"/><button class="eye" onclick="toggleEye('ai-key')">👁</button></div>
+      <div class="hint">Get from console.anthropic.com</div></div>
+    <div class="fg"><label class="fl">Response language</label>
+      <select class="fi" id="ai-lang"><option value="hinglish">Hindi + English (Hinglish)</option><option value="english">English only</option><option value="hindi">Hindi only</option></select></div>
+    <button class="btn btn-navy" onclick="saveAI()">Save</button>
+    <button class="btn btn-outline" onclick="nav('s-settings')">Cancel</button>
+  </div></div>
+</div>
+
+</div><!-- #app -->
+<div class="toast" id="toast"></div>
+<script>
+// ═══════════════════════════════════════════════════════════
+//  CRYPTO — SHA-256 via Web Crypto API (built into every browser)
+//  Hashes are one-way: even reading localStorage gives nothing useful
+// ═══════════════════════════════════════════════════════════
+async function sha256(str){
+  const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DATA STORE — sensitive fields obfuscated at rest
+//  Employees are stored WITHOUT pin field — only pinHash kept.
+//  Session token stored separately; never stored alongside data.
+// ═══════════════════════════════════════════════════════════
+const DB = {
+  get(k){ try{ return JSON.parse(localStorage.getItem('pp_'+k)||'null'); }catch(e){ return null; } },
+  set(k,v){ localStorage.setItem('pp_'+k, JSON.stringify(v)); },
+  getArr(k){ return DB.get(k)||[]; },
+};
+
+// Session lives only in memory — cleared on page reload or logout
+// It holds the full employee object (minus pinHash) after successful login
+const SESSION = {
+  _token: null,
+  _user:  null,
+  set(user, token){ this._user=user; this._token=token; },
+  clear(){ this._user=null; this._token=null; },
+  valid(){ return !!this._token && !!this._user; },
+  user(){ return this._user; },
+};
+
+async function seedDemoData(force){
+  if(force || !DB.get('seeded')){
+    // Resolve ALL hashes first — await inside array literals doesn't work
+    // Demo PINs: Manager=1111, Ext1=2222, Ext2=3333, Cut=4444, Gate=5555, Acc=6666
+    const [h1,h2,h3,h4,h5,h6] = await Promise.all([
+      sha256('1111'+'polypack_salt'),
+      sha256('2222'+'polypack_salt'),
+      sha256('3333'+'polypack_salt'),
+      sha256('4444'+'polypack_salt'),
+      sha256('5555'+'polypack_salt'),
+      sha256('6666'+'polypack_salt'),
+    ]);
+    DB.set('employees',[
+      {id:'e1',name:'Gyanshyam Yadav', role:'Manager',      gender:'Male',  phone:'9876543210',pinHash:h1,machine:''},
+      {id:'e2',name:'Bhaskar',    role:'Extrusion Operator',  gender:'Male',  phone:'9876500001',pinHash:h2,machine:'Extruder 1'},
+      {id:'e3',name:'Mohan Patel',    role:'Extrusion Operator',  gender:'Male',  phone:'9876500002',pinHash:h3,machine:'Extruder 2'},
+      {id:'e4',name:'Meera Bai',      role:'Cutting Operator',    gender:'Female',phone:'9876500003',pinHash:h4,machine:'Cutting M/C 1'},
+      {id:'e5',name:'Mukesh Kumar',      role:'Gatekeeper',          gender:'Male',  phone:'9876500004',pinHash:h5,machine:''},
+      {id:'e6',name:'Narendra Khandelwal',     role:'Accountant',          gender:'Female',phone:'9876500005',pinHash:h6,machine:''},
+    ]);
+    DB.set('machines',[
+      {id:'m1',name:'Extruder 1',type:'Extruder',capacity:400,status:'Active',remarks:'HDPE/PP grade'},
+      {id:'m2',name:'Extruder 2',type:'Extruder',capacity:360,status:'Active',remarks:'PP grade'},
+      {id:'m3',name:'Extruder 3',type:'Extruder',capacity:300,status:'Under Maintenance',remarks:''},
+      {id:'m4',name:'Cutting M/C 1',type:'Cutting & Sealing',capacity:0,status:'Active',remarks:''},
+      {id:'m5',name:'Cutting M/C 2',type:'Cutting & Sealing',capacity:0,status:'Active',remarks:''},
+    ]);
+    DB.set('materials',[
+      {id:'mat1',name:'HDPE',min:200,unit:'kg'},
+      {id:'mat2',name:'LDPE',min:150,unit:'kg'},
+      {id:'mat3',name:'PP',min:200,unit:'kg'},
+      {id:'mat4',name:'HD Natural',min:150,unit:'kg'},
+    ]);
+    DB.set('clients',[
+      {id:'c1',name:'Cipla Ltd.',industry:'Pharmaceutical',contact:'Anil Mehta',phone:'9900001111',gstin:'27AAACX4083R1ZN'},
+      {id:'c2',name:'Arvind Mills',industry:'Garments/Textile',contact:'Sunil Arora',phone:'9900002222',gstin:'24AAACB0583G1Z1'},
+      {id:'c3',name:'Sun Pharma',industry:'Pharmaceutical',contact:'Vivek Shah',phone:'9900003333',gstin:'24AAACS1809B1ZG'},
+      {id:'c4',name:'Mafatlal Fab.',industry:'Garments/Textile',contact:'Rohit Mafatlal',phone:'9900004444',gstin:'24AAACM0010K1Z4'},
+    ]);
+    DB.set('stock',[
+      {material:'HDPE',current:180,min:200},
+      {material:'LDPE',current:230,min:150},
+      {material:'PP',current:640,min:200},
+      {material:'HD Natural',current:510,min:150},
+    ]);
+    DB.set('orders',[
+      {id:'ORD-001',client:'Cipla Ltd.',material:'HDPE',thickness:'200',size:'30×45 cm',quantity:5000,unit:'pcs',due_date:'11/06/2026',status:'Pending'},
+      {id:'ORD-002',client:'Arvind Mills',material:'PP',thickness:'80',size:'Roll',quantity:300,unit:'kg',due_date:'14/06/2026',status:'In Progress'},
+      {id:'ORD-003',client:'Sun Pharma',material:'LDPE',thickness:'60',size:'Roll',quantity:200,unit:'kg',due_date:'18/06/2026',status:'Pending'},
+      {id:'ORD-004',client:'Mafatlal Fab.',material:'HDPE',thickness:'150',size:'25×38 cm',quantity:2000,unit:'pcs',due_date:'22/06/2026',status:'Pending'},
+    ]);
+    DB.set('company',{name:'ASKAS Plastic Private Limited',addr1:'Plot 99 A, Industrial Area, No 1',addr2:'A.B. Road',city:'Dewas',state:'Madhya Pradesh',pin:'455001',phone:'+91 94250 47811',email:'accounts@polypack.in',gstin:'23ABCDE1234F1Z8',cst:'MP/CST/2019/4421',pan:'ABCDE1234F',udyam:''});
+    DB.set('today_stats',{extruded:1240,bags:8400});
+    DB.set('seeded',true);
+  }
+}
+
+async function resetDemoData(){
+  if(!confirm('Reset all demo data? This restores employees, machines, materials, clients, stock & orders to factory defaults. Company profile & connection settings are kept.')) return;
+  ['employees','machines','materials','clients','stock','orders','today_stats','seeded'].forEach(k=>localStorage.removeItem('pp_'+k));
+  await seedDemoData(true);
+  toast('Demo data reset ✓');
+  loadAllDropdowns();
+  buildLoginDropdown();
+  if(SESSION.valid()){
+    // re-find current user in fresh employee list (by name) so session stays valid
+    const fresh = DB.getArr('employees').find(e=>e.name===SESSION.user().name);
+    if(fresh){ const u=safeUser(fresh); SESSION.set(u, SESSION._token); }
+  }
+  renderDash();
+  if(document.getElementById('s-settings').classList.contains('active')) refreshSettingsCounts();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  LOGIN / AUTH
+//  - PIN is hashed (SHA-256 + salt) before comparing
+//  - On success a random session token is generated in memory only
+//  - currentUser is a PROXY that reads from SESSION — no global with PINs
+//  - localStorage never contains plain PINs, only hashes
+// ═══════════════════════════════════════════════════════════
+let pinBuffer = '';
+
+// Safe user = employee record stripped of pinHash before use in UI/session
+function safeUser(emp){
+  const {pinHash, ...safe} = emp;
+  return safe;
+}
+
+// Convenience proxy so existing code using currentUser still works
+const currentUserProxy = new Proxy({}, {
+  get(_, prop){ return SESSION.valid() ? SESSION.user()[prop] : null; }
+});
+// Alias used throughout the app
+let currentUser = currentUserProxy;
+
+function buildLoginDropdown(){
+  const emps = DB.getArr('employees');
+  const sel  = document.getElementById('login-who');
+  const prevVal = sel.value;
+  sel.innerHTML = '<option value="">— Select your name —</option>';
+  emps.forEach(e=>{
+    const o=document.createElement('option');
+    o.value=e.id; o.textContent=e.name+' · '+e.role;
+    sel.appendChild(o);
+  });
+  if(emps.find(e=>e.id===prevVal)) sel.value = prevVal;
+}
+
+function pinKey(k){
+  const err = document.getElementById('login-err');
+  err.textContent='';
+  if(k==='clear'){ pinBuffer=''; updatePinDots(); return; }
+  if(k==='del'){ pinBuffer=pinBuffer.slice(0,-1); updatePinDots(); return; }
+  if(pinBuffer.length>=4) return;
+  pinBuffer+=k;
+  updatePinDots();
+  if(pinBuffer.length===4) checkLogin();
+}
+
+function updatePinDots(){
+  for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('filled', i<pinBuffer.length);
+}
+
+async function checkLogin(){
+  const uid  = document.getElementById('login-who').value;
+  const err  = document.getElementById('login-err');
+  const entered = pinBuffer;
+  pinBuffer=''; updatePinDots(); // clear buffer immediately — never keep PIN in memory longer than needed
+
+  if(!uid){ err.textContent='Please select your name first'; return; }
+  const emp = DB.getArr('employees').find(e=>e.id===uid);
+  if(!emp){ err.textContent='Employee not found'; return; }
+
+  // Hash the entered PIN with same salt and compare to stored hash
+  const enteredHash = await sha256(entered + 'polypack_salt');
+  if(emp.pinHash !== enteredHash){
+    err.textContent='Wrong PIN — try again';
+    return;
+  }
+
+  // Generate a random session token — lives only in memory, gone on reload/logout
+  const token = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)+Date.now();
+  SESSION.set(safeUser(emp), token); // safeUser strips pinHash before storing in session
+
+  document.getElementById('login-screen').classList.add('hide');
+  applyRoleUI();
+  loadAllDropdowns();
+  renderDash();
+  toast('Welcome, '+emp.name.split(' ')[0]+'! 👋');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ROLE-BASED UI
+//  Roles: Manager (full), Accountant (no master edit, has reports),
+//  Operators/Gatekeeper/Helper (Log Work + Stock view only)
+// ═══════════════════════════════════════════════════════════
+function applyRoleUI(){
+  const user = SESSION.user();
+  if(!user) return;
+  const role = user.role;
+  const h = new Date().getHours();
+  const g = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  document.getElementById('greet-name').textContent = g+', '+user.name.split(' ')[0]+' 👋';
+  document.getElementById('role-chip').textContent  = role;
+  document.getElementById('co-display').textContent = (DB.get('company')||{}).name || 'PolyPack Industries';
+  document.getElementById('fy-display').textContent = getCurrentFY();
+
+  const isManager    = role==='Manager';
+  const isAccountant = role==='Accountant';
+  const isAdmin      = isManager; // only Manager edits masters/settings
+  const canSeeReports= isManager || isAccountant;
+  const canSeeOrders = isManager || isAccountant;
+  const isOperator   = role.includes('Operator');
+  const isGatekeeper = role==='Gatekeeper';
+
+  // Bottom nav visibility
+  document.getElementById('bn-set').style.display = isAdmin ? '' : 'none';
+  document.getElementById('bn-rep').style.display = canSeeReports ? '' : 'none';
+
+  // Stock tab visible to everyone (read), but GRN add restricted to Manager/Accountant
+  document.getElementById('bn-stock').style.display = '';
+
+  // Machine status section — only meaningful for Manager/Accountant
+  document.getElementById('mc-sec').style.display    = (isManager||isAccountant) ? '' : 'none';
+  document.getElementById('machine-list').style.display = (isManager||isAccountant) ? '' : 'none';
+
+  // Log Work tabs — restrict per role
+  // Extrusion: Manager + Extrusion Operator
+  // Cutting:   Manager + Cutting Operator
+  // Dispatch:  Manager + Gatekeeper
+  // Attendance:Manager only (marks others) -- operators can self mark too
+  const tabsEl = document.querySelectorAll('#log-tabs .tab');
+  // tab order: Extrusion(0) Cutting(1) Dispatch(2) Attendance(3)
+  const showExt = isManager || role==='Extrusion Operator';
+  const showCut = isManager || role==='Cutting Operator';
+  const showDis = isManager || isGatekeeper;
+  const showAtt = true; // everyone can mark their own attendance
+  tabsEl[0].style.display = showExt ? '' : 'none';
+  tabsEl[1].style.display = showCut ? '' : 'none';
+  tabsEl[2].style.display = showDis ? '' : 'none';
+  tabsEl[3].style.display = showAtt ? '' : 'none';
+
+  // Auto-select first visible tab
+  const visible = [...tabsEl].find(t=>t.style.display!=='none');
+  if(visible) switchTab(visible, {0:'t-ext',1:'t-cut',2:'t-dis',3:'t-att'}[[...tabsEl].indexOf(visible)]);
+
+  // Pre-fill operator dropdowns to self & lock
+  setTimeout(()=>{
+    const user = SESSION.user();
+    if(!user) return;
+    const role = user.role;
+    const isManager = role==='Manager';
+    const isGatekeeper = role==='Gatekeeper';
+    if(role==='Extrusion Operator'){
+      lockSelect('ext-op', user.name);
+      if(user.machine) lockSelect('ext-machine', user.machine);
+    }
+    if(role==='Cutting Operator'){
+      lockSelect('cut-op', user.name);
+      if(user.machine) lockSelect('cut-machine', user.machine);
+    }
+    if(isGatekeeper){
+      lockSelect('dis-gate', user.name);
+    }
+    if(isManager){
+      unlockSelect('ext-op'); unlockSelect('ext-machine');
+      unlockSelect('cut-op'); unlockSelect('cut-machine');
+      unlockSelect('dis-gate');
+    }
+    if(!isManager){
+      lockSelect('att-emp', null, user.id);
+    } else {
+      unlockSelect('att-emp');
+    }
+  }, 50);
+}
+
+function lockSelect(id, byName, byValue){
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(byValue!==undefined){ el.value = byValue; }
+  else {
+    for(let o of el.options){ if(o.textContent===byName||o.value===byName){ el.value=o.value; break; } }
+  }
+  el.disabled = true;
+  el.style.opacity = '0.7';
+  el.style.background = '#eef0f8';
+}
+function unlockSelect(id){
+  const el = document.getElementById(id);
+  if(!el) return;
+  el.disabled = false;
+  el.style.opacity = '';
+  el.style.background = '';
+}
+
+function doLogout(){
+  if(!confirm('Logout?')) return;
+  SESSION.clear();
+  pinBuffer='';
+  document.getElementById('login-who').value='';
+  updatePinDots();
+  document.getElementById('login-err').textContent='';
+  buildLoginDropdown();
+  document.getElementById('login-screen').classList.remove('hide');
+  nav('s-dash');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const map={'s-dash':'bn-dash','s-log':'bn-log','s-stock':'bn-stock','s-reports':'bn-rep','s-settings':'bn-set'};
+  document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active'));
+  if(map[id]){ const el=document.getElementById(map[id]); if(el) el.classList.add('active'); }
+  if(id==='s-stock')         loadStock();
+  if(id==='s-orders')        loadOrders();
+  if(id==='s-reports')       loadReports();
+  if(id==='s-tally-data')    loadTallyData();
+  if(id==='s-settings')      refreshSettingsCounts();
+  if(id==='s-master-emp')    renderEmpList();
+  if(id==='s-master-mc')     renderMcList();
+  if(id==='s-master-mat')    renderMatList();
+  if(id==='s-master-client') renderClientList();
+  if(id==='s-company')       loadCompanyForm();
+  if(id==='s-tally')         loadTallyForm();
+  if(id==='s-sheets')        loadSheetsForm();
+  if(id==='s-log'){ loadAllDropdowns(); applyRoleUI(); }
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DASHBOARD
+// ═══════════════════════════════════════════════════════════
+function renderDash(){
+  document.getElementById('today-date').textContent =
+    new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('fy-display').textContent = getCurrentFY();
+
+  const t = DB.get('today_stats') || {extruded:0,bags:0};
+  document.getElementById('st-ext').textContent  = t.extruded.toLocaleString();
+  document.getElementById('st-bags').textContent = t.bags.toLocaleString();
+  document.getElementById('st-mc').textContent   = DB.getArr('machines').filter(m=>m.status==='Active').length;
+  const orders = DB.getArr('orders');
+  document.getElementById('st-ord').textContent  = orders.filter(o=>o.status==='Pending'||o.status==='In Progress').length;
+
+  // Alerts
+  const stock = DB.getArr('stock');
+  const aEl = document.getElementById('dash-alerts');
+  aEl.innerHTML='';
+  stock.filter(s=>s.current<=s.min).forEach(s=>{
+    aEl.innerHTML += `<div class="alert a-red" style="margin-top:10px"><div class="alert-icon">⚠️</div><div><b>${s.material} stock low</b> — ${s.current} kg remaining (min: ${s.min} kg)</div></div>`;
+  });
+  const urgent = orders.filter(o=>o.status==='Pending');
+  if(urgent.length){
+    aEl.innerHTML += `<div class="alert a-yellow" style="margin-top:8px"><div class="alert-icon">🕐</div><div><b>${urgent[0].client} order pending</b> — ${urgent[0].material} · ${urgent[0].quantity} ${urgent[0].unit} · Due ${urgent[0].due_date}</div></div>`;
+  }
+  if(!aEl.innerHTML){
+    aEl.innerHTML = `<div class="alert a-green" style="margin-top:10px"><div class="alert-icon">✅</div><div>All stock levels healthy, no urgent orders</div></div>`;
+  }
+
+  // Machines (only rendered visible for Manager/Accountant via applyRoleUI)
+  const machines = DB.getArr('machines').filter(m=>m.status==='Active');
+  const mcEl = document.getElementById('machine-list');
+  mcEl.innerHTML = machines.slice(0,4).map(m=>{
+    const isExt = m.type==='Extruder';
+    const pct   = isExt ? Math.floor(Math.random()*40+40) : 0;
+    const op    = DB.getArr('employees').find(e=>e.machine===m.name);
+    return `<div class="mcard">
+      <div class="mcard-top">
+        <div><div class="mcard-name">${m.name}</div><div class="mcard-op">Operator: ${op?op.name:'—'}</div></div>
+        <div style="font-size:11px;font-weight:700;color:${isExt?'#16a34a':'#d97706'}"><span class="sdot ${isExt?'s-run':'s-idle'}"></span>${isExt?'Running':'Idle'}</div>
+      </div>
+      ${isExt&&m.capacity?`<div class="prog-row"><span>Target: ${m.capacity} kg</span><span>${Math.floor(m.capacity*pct/100)} kg</span></div><div class="prog-bg"><div class="prog-fill" style="width:${pct}%"></div></div>`:''}
+    </div>`;
+  }).join('');
+
+  // Order preview
+  const oEl = document.getElementById('order-preview');
+  if(!orders.length){ oEl.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-msg">No pending orders</div></div>'; return; }
+  oEl.innerHTML = orders.slice(0,3).map(o=>{
+    const cls = o.status==='Pending'?'#ef4444':o.status==='In Progress'?'#f59e0b':'#22c55e';
+    const bc  = o.status==='Pending'?'b-red':o.status==='In Progress'?'b-yellow':'b-green';
+    return `<div class="row"><div class="dot" style="background:${cls}"></div>
+      <div class="row-info"><div class="row-name">${o.client}</div><div class="row-sub">${o.material} · ${o.thickness}µ · ${o.quantity} ${o.unit}</div></div>
+      <div class="row-right"><div style="font-size:11px;color:var(--muted)">${o.due_date}</div><div class="badge ${bc}" style="margin-top:3px">${o.status}</div></div></div>`;
+  }).join('');
+}
+
+function refreshDash(){ renderDash(); toast('Dashboard refreshed ✓'); }
+
+// ═══════════════════════════════════════════════════════════
+//  FY HELPERS (April–March)
+// ═══════════════════════════════════════════════════════════
+function getCurrentFY(){
+  const n=new Date(), m=n.getMonth()+1, y=n.getFullYear();
+  const s = m>=4?y:y-1, e=s+1;
+  return 'FY'+String(s).slice(2)+String(e).slice(2);
+}
+function fyDisplay(label){
+  const s=parseInt('20'+label.slice(2,4)), e=parseInt('20'+label.slice(4,6));
+  return '01 Apr '+s+' – 31 Mar '+e;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  DROPDOWNS
+// ═══════════════════════════════════════════════════════════
+function fillSelect(id, items, valFn, labelFn, blank){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const prev = el.value;
+  el.innerHTML = blank?`<option value="">${blank}</option>`:'';
+  items.forEach(i=>{ const o=document.createElement('option'); o.value=valFn(i); o.textContent=labelFn(i); el.appendChild(o); });
+  // restore prior selection if still present
+  if(prev){ for(let o of el.options){ if(o.value===prev){ el.value=prev; break; } } }
+}
+
+function loadAllDropdowns(){
+  const emps    = DB.getArr('employees');
+  const mcs     = DB.getArr('machines');
+  const mats    = DB.getArr('materials');
+  const clients = DB.getArr('clients');
+  const extMcs  = mcs.filter(m=>m.type==='Extruder'&&m.status==='Active');
+  const cutMcs  = mcs.filter(m=>m.type==='Cutting & Sealing'&&m.status==='Active');
+
+  fillSelect('ext-op',      emps.filter(e=>e.role.includes('Operator')||e.role==='Manager'), e=>e.name, e=>e.name, '— Select —');
+  fillSelect('ext-machine', extMcs, m=>m.name, m=>m.name+' ('+m.capacity+' kg)', '— Select —');
+  fillSelect('ext-mat',     mats, m=>m.name, m=>m.name, '— Select —');
+
+  fillSelect('cut-op',      emps.filter(e=>e.role.includes('Operator')||e.role==='Manager'), e=>e.name, e=>e.name, '— Select —');
+  fillSelect('cut-machine', cutMcs, m=>m.name, m=>m.name, '— Select —');
+  fillSelect('cut-src',     extMcs, m=>m.name, m=>m.name+' roll', '— Select —');
+  fillSelect('cut-client',  clients, c=>c.name, c=>c.name, '— Select —');
+
+  fillSelect('dis-client',  clients, c=>c.name, c=>c.name, '— Select —');
+  fillSelect('dis-gate',    emps.filter(e=>e.role==='Gatekeeper'||e.role==='Manager'), e=>e.name, e=>e.name, '— Select —');
+
+  fillSelect('att-emp', emps, e=>e.id, e=>e.name+' · '+e.role, '— Select —');
+
+  fillSelect('grn-mat', mats, m=>m.name, m=>m.name, '— Select —');
+  fillSelect('grn-by',  emps, e=>e.name, e=>e.name, '— Select —');
+
+  fillSelect('emp-mc', mcs.filter(m=>m.status==='Active'), m=>m.name, m=>m.name+'  ('+m.type+')', '— None —');
+}
+
+function refreshSettingsCounts(){
+  const e=DB.getArr('employees'), m=DB.getArr('machines'), mat=DB.getArr('materials'), c=DB.getArr('clients');
+  document.getElementById('emp-count-lbl').textContent    = e.length+' employee'+(e.length!==1?'s':'');
+  document.getElementById('mc-count-lbl').textContent     = m.length+' machine'+(m.length!==1?'s':'');
+  document.getElementById('mat-count-lbl').textContent    = mat.length+' material type'+(mat.length!==1?'s':'');
+  document.getElementById('client-count-lbl').textContent = c.length+' client'+(c.length!==1?'s':'');
+  document.getElementById('cur-fy').textContent           = getCurrentFY();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MASTER: EMPLOYEES  (Add · Edit · Delete)
+// ═══════════════════════════════════════════════════════════
+const roleIcon={Manager:'👑','Extrusion Operator':'🔩','Cutting Operator':'✂️',Accountant:'📊',Gatekeeper:'🚪',Helper:'🙋'};
+let editingEmpId = null; // null = adding new, else = editing existing
+
+function renderEmpList(){
+  const list=DB.getArr('employees');
+  const el=document.getElementById('emp-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">👤</div><div class="empty-msg">No employees yet. Tap + Add.</div></div>'; return; }
+  el.innerHTML = list.map(e=>`
+    <div class="mitem">
+      <div class="mitem-icon">${roleIcon[e.role]||'👤'}</div>
+      <div class="mitem-info">
+        <div class="mitem-name">${e.name} <span style="font-weight:500;color:var(--muted)">(${e.gender})</span></div>
+        <div class="mitem-sub">${e.role}${e.machine?' · '+e.machine:''} · PIN ${e.pinHash?'set ✓':'not set'}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="mitem-edit" onclick="editEmployee('${e.id}')">✏️</button>
+        <button class="mitem-del"  onclick="delEmployee('${e.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddEmp(){
+  editingEmpId = null;
+  // Reset form title and button
+  document.querySelector('#add-emp-form div:first-child').textContent = 'Add new employee';
+  document.getElementById('save-emp-btn').textContent = 'Save employee';
+  // Clear fields
+  ['emp-name','emp-phone','emp-pin'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('emp-role').value='Extrusion Operator';
+  document.getElementById('emp-gender').value='Male';
+  document.getElementById('emp-mc').value='';
+  // PIN hint — required for new
+  document.getElementById('emp-pin-hint').textContent = '4-digit PIN — employee uses this to login';
+  document.getElementById('add-emp-form').style.display='block';
+  loadAllDropdowns();
+}
+
+function editEmployee(id){
+  const emp = DB.getArr('employees').find(e=>e.id===id);
+  if(!emp) return;
+  editingEmpId = id;
+  // Update form title and button
+  document.querySelector('#add-emp-form div:first-child').textContent = 'Edit employee';
+  document.getElementById('save-emp-btn').textContent = 'Update employee';
+  // Pre-fill fields
+  document.getElementById('emp-name').value   = emp.name;
+  document.getElementById('emp-phone').value  = emp.phone || '';
+  document.getElementById('emp-pin').value    = ''; // never pre-fill PIN
+  document.getElementById('emp-role').value   = emp.role;
+  document.getElementById('emp-gender').value = emp.gender;
+  // PIN hint — optional on edit
+  document.getElementById('emp-pin-hint').textContent = 'Leave blank to keep existing PIN unchanged';
+  loadAllDropdowns();
+  // Set machine after dropdown loads
+  setTimeout(()=>{ document.getElementById('emp-mc').value = emp.machine||''; }, 60);
+  document.getElementById('add-emp-form').style.display='block';
+  // Scroll form into view
+  document.getElementById('add-emp-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideAddEmp(){
+  editingEmpId = null;
+  document.getElementById('add-emp-form').style.display='none';
+  ['emp-name','emp-phone','emp-pin'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('emp-role').value='Extrusion Operator';
+  document.getElementById('emp-gender').value='Male';
+  document.getElementById('emp-mc').value='';
+}
+
+async function saveEmployee(){
+  const name  = document.getElementById('emp-name').value.trim();
+  const pin   = document.getElementById('emp-pin').value.trim();
+  const role  = document.getElementById('emp-role').value;
+  const gender= document.getElementById('emp-gender').value;
+  const phone = document.getElementById('emp-phone').value.trim();
+  const machine=document.getElementById('emp-mc').value;
+
+  if(!name){ toast('Enter employee name'); return; }
+  // PIN validation: required on add, optional on edit (blank = keep old)
+  if(!editingEmpId && !/^\d{4}$/.test(pin)){ toast('PIN must be exactly 4 digits'); return; }
+  if(pin && !/^\d{4}$/.test(pin)){ toast('PIN must be exactly 4 digits'); return; }
+
+  const list = DB.getArr('employees');
+
+  if(editingEmpId){
+    // ── EDIT mode ──────────────────────────────────────────
+    const idx = list.findIndex(e=>e.id===editingEmpId);
+    if(idx===-1){ toast('Employee not found'); return; }
+    // Duplicate name check — exclude self
+    if(list.find(e=>e.id!==editingEmpId && e.name.toLowerCase()===name.toLowerCase())){
+      toast('Another employee already has this name'); return;
+    }
+    // If new PIN entered — hash and check duplicate
+    let pinHash = list[idx].pinHash; // keep old by default
+    if(pin){
+      const newHash = await sha256(pin + 'polypack_salt');
+      if(list.find(e=>e.id!==editingEmpId && e.pinHash===newHash)){
+        toast('PIN already used by another employee'); return;
+      }
+      pinHash = newHash;
+    }
+    list[idx] = { ...list[idx], name, role, gender, phone, machine, pinHash };
+    DB.set('employees', list);
+    toast('Employee updated ✓');
+  } else {
+    // ── ADD mode ───────────────────────────────────────────
+    const newHash = await sha256(pin + 'polypack_salt');
+    if(list.find(e=>e.pinHash===newHash)){ toast('PIN already used by another employee'); return; }
+    if(list.find(e=>e.name.toLowerCase()===name.toLowerCase())){ toast('Employee already exists'); return; }
+    list.push({ id:'e'+Date.now(), name, role, gender, phone, pinHash:newHash, machine });
+    DB.set('employees', list);
+    toast('Employee added ✓');
+  }
+
+  hideAddEmp();
+  renderEmpList();
+  buildLoginDropdown();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+function delEmployee(id){
+  const list = DB.getArr('employees');
+  const emp  = list.find(e=>e.id===id);
+  if(SESSION.valid() && SESSION.user().id===id){ toast("You can't remove your own logged-in account"); return; }
+  if(!confirm('Remove '+(emp?emp.name:'this employee')+'? This cannot be undone.')) return;
+  DB.set('employees', list.filter(e=>e.id!==id));
+  if(editingEmpId===id) hideAddEmp(); // close form if editing this one
+  toast('Employee removed ✓');
+  renderEmpList();
+  buildLoginDropdown();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MASTER: MACHINES  (Add · Edit · Delete)
+// ═══════════════════════════════════════════════════════════
+const mcIcon={'Extruder':'🔩','Cutting & Sealing':'✂️','Printing':'🖨️','Other':'⚙️'};
+const mcStatusBadge={'Active':'b-green','Under Maintenance':'b-yellow','Inactive':'b-gray'};
+let editingMcId = null;
+
+function renderMcList(){
+  const list=DB.getArr('machines');
+  const el=document.getElementById('mc-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">⚙️</div><div class="empty-msg">No machines yet. Tap + Add.</div></div>'; return; }
+  el.innerHTML = list.map(m=>`
+    <div class="mitem">
+      <div class="mitem-icon">${mcIcon[m.type]||'⚙️'}</div>
+      <div class="mitem-info">
+        <div class="mitem-name">${m.name}</div>
+        <div class="mitem-sub">${m.type}${m.capacity?' · '+m.capacity+' kg/shift':''}${m.remarks?' · '+m.remarks:''}</div>
+      </div>
+      <span class="badge ${mcStatusBadge[m.status]||'b-gray'}" style="margin-right:4px;flex-shrink:0">${m.status}</span>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="mitem-edit" onclick="editMachine('${m.id}')">✏️</button>
+        <button class="mitem-del"  onclick="delMachine('${m.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddMc(){
+  editingMcId = null;
+  document.querySelector('#add-mc-form div:first-child').textContent = 'Add new machine';
+  document.getElementById('save-mc-btn').textContent = 'Save machine';
+  ['mc-name','mc-cap','mc-rem'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mc-type').value='Extruder';
+  document.getElementById('mc-status').value='Active';
+  document.getElementById('add-mc-form').style.display='block';
+}
+
+function editMachine(id){
+  const m = DB.getArr('machines').find(x=>x.id===id);
+  if(!m) return;
+  editingMcId = id;
+  document.querySelector('#add-mc-form div:first-child').textContent = 'Edit machine';
+  document.getElementById('save-mc-btn').textContent = 'Update machine';
+  document.getElementById('mc-name').value   = m.name;
+  document.getElementById('mc-type').value   = m.type;
+  document.getElementById('mc-cap').value    = m.capacity || '';
+  document.getElementById('mc-status').value = m.status;
+  document.getElementById('mc-rem').value    = m.remarks || '';
+  document.getElementById('add-mc-form').style.display='block';
+  document.getElementById('add-mc-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideAddMc(){
+  editingMcId = null;
+  document.getElementById('add-mc-form').style.display='none';
+  ['mc-name','mc-cap','mc-rem'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mc-type').value='Extruder';
+  document.getElementById('mc-status').value='Active';
+}
+
+function saveMachine(){
+  const name = document.getElementById('mc-name').value.trim();
+  if(!name){ toast('Enter machine name'); return; }
+  const list = DB.getArr('machines');
+  const entry = {
+    name,
+    type:     document.getElementById('mc-type').value,
+    capacity: parseFloat(document.getElementById('mc-cap').value)||0,
+    status:   document.getElementById('mc-status').value,
+    remarks:  document.getElementById('mc-rem').value.trim(),
+  };
+
+  if(editingMcId){
+    const idx = list.findIndex(x=>x.id===editingMcId);
+    if(idx===-1){ toast('Machine not found'); return; }
+    if(list.find(x=>x.id!==editingMcId && x.name.toLowerCase()===name.toLowerCase())){ toast('Another machine has this name'); return; }
+    list[idx] = { ...list[idx], ...entry };
+    DB.set('machines', list);
+    toast('Machine updated ✓');
+  } else {
+    if(list.find(x=>x.name.toLowerCase()===name.toLowerCase())){ toast('Machine already exists'); return; }
+    list.push({ id:'m'+Date.now(), ...entry });
+    DB.set('machines', list);
+    toast('Machine added ✓');
+  }
+
+  hideAddMc();
+  renderMcList();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+function delMachine(id){
+  const list = DB.getArr('machines');
+  const m = list.find(x=>x.id===id);
+  if(!confirm('Remove '+(m?m.name:'this machine')+'?')) return;
+  DB.set('machines', list.filter(x=>x.id!==id));
+  if(editingMcId===id) hideAddMc();
+  toast('Machine removed ✓');
+  renderMcList();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MASTER: MATERIAL TYPES  (Add · Edit · Delete)
+// ═══════════════════════════════════════════════════════════
+let editingMatId = null;
+
+function renderMatList(){
+  const list  = DB.getArr('materials');
+  const stock = DB.getArr('stock');
+  const el    = document.getElementById('mat-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🧪</div><div class="empty-msg">No materials yet. Tap + Add.</div></div>'; return; }
+  el.innerHTML = list.map(m=>{
+    const s = stock.find(x=>x.material===m.name);
+    return `<div class="mitem">
+      <div class="mitem-icon">🧪</div>
+      <div class="mitem-info">
+        <div class="mitem-name">${m.name}</div>
+        <div class="mitem-sub">Min alert: ${m.min} ${m.unit}${s?' · Stock: '+s.current+' '+m.unit:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="mitem-edit" onclick="editMaterial('${m.id}')">✏️</button>
+        <button class="mitem-del"  onclick="delMaterial('${m.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function showAddMat(){
+  editingMatId = null;
+  document.querySelector('#add-mat-form div:first-child').textContent = 'Add material type';
+  document.getElementById('save-mat-btn').textContent = 'Save material';
+  document.getElementById('mat-name').value='';
+  document.getElementById('mat-min').value='';
+  document.getElementById('mat-unit').value='kg';
+  document.getElementById('mat-name').disabled = false;
+  document.getElementById('add-mat-form').style.display='block';
+}
+
+function editMaterial(id){
+  const m = DB.getArr('materials').find(x=>x.id===id);
+  if(!m) return;
+  editingMatId = id;
+  document.querySelector('#add-mat-form div:first-child').textContent = 'Edit material type';
+  document.getElementById('save-mat-btn').textContent = 'Update material';
+  document.getElementById('mat-name').value = m.name;
+  document.getElementById('mat-min').value  = m.min;
+  document.getElementById('mat-unit').value = m.unit;
+  // Name change would break stock references — disable name edit, only allow min/unit changes
+  document.getElementById('mat-name').disabled = true;
+  document.getElementById('add-mat-form').style.display='block';
+  document.getElementById('add-mat-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideAddMat(){
+  editingMatId = null;
+  document.getElementById('add-mat-form').style.display='none';
+  document.getElementById('mat-name').value='';
+  document.getElementById('mat-min').value='';
+  document.getElementById('mat-unit').value='kg';
+  document.getElementById('mat-name').disabled = false;
+}
+
+function saveMaterial(){
+  const name = document.getElementById('mat-name').value.trim();
+  const min  = parseFloat(document.getElementById('mat-min').value)||0;
+  const unit = document.getElementById('mat-unit').value;
+  if(!name){ toast('Enter material name'); return; }
+  const list  = DB.getArr('materials');
+  const stock = DB.getArr('stock');
+
+  if(editingMatId){
+    const idx = list.findIndex(x=>x.id===editingMatId);
+    if(idx===-1){ toast('Material not found'); return; }
+    list[idx] = { ...list[idx], min, unit };
+    // Update min in stock entry too
+    const si = stock.findIndex(s=>s.material===list[idx].name);
+    if(si!==-1){ stock[si].min = min; DB.set('stock', stock); }
+    DB.set('materials', list);
+    toast('Material updated ✓');
+  } else {
+    if(list.find(m=>m.name.toLowerCase()===name.toLowerCase())){ toast('Material already exists'); return; }
+    list.push({ id:'mat'+Date.now(), name, min, unit });
+    DB.set('materials', list);
+    // Add stock entry with 0 balance
+    if(!stock.find(s=>s.material===name)){
+      stock.push({ material:name, current:0, min });
+      DB.set('stock', stock);
+    }
+    toast('Material added ✓');
+  }
+
+  hideAddMat();
+  renderMatList();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+function delMaterial(id){
+  const list = DB.getArr('materials');
+  const m    = list.find(x=>x.id===id);
+  if(!confirm('Remove '+(m?m.name:'this material')+'? Its stock entry will also be removed.')) return;
+  DB.set('materials', list.filter(x=>x.id!==id));
+  if(m) DB.set('stock', DB.getArr('stock').filter(s=>s.material!==m.name));
+  if(editingMatId===id) hideAddMat();
+  toast('Material removed ✓');
+  renderMatList();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  MASTER: CLIENTS  (Add · Edit · Delete)
+// ═══════════════════════════════════════════════════════════
+const indIcon={'Pharmaceutical':'💊','Garments/Textile':'👕','Food':'🍱','Industrial':'🏭','Other':'🏢'};
+let editingClientId = null;
+
+function renderClientList(){
+  const list = DB.getArr('clients');
+  const el   = document.getElementById('client-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🏢</div><div class="empty-msg">No clients yet. Tap + Add.</div></div>'; return; }
+  el.innerHTML = list.map(c=>`
+    <div class="mitem">
+      <div class="mitem-icon">${indIcon[c.industry]||'🏢'}</div>
+      <div class="mitem-info">
+        <div class="mitem-name">${c.name}</div>
+        <div class="mitem-sub">${c.industry}${c.contact?' · '+c.contact:''}${c.phone?' · '+c.phone:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="mitem-edit" onclick="editClient('${c.id}')">✏️</button>
+        <button class="mitem-del"  onclick="delClient('${c.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddClient(){
+  editingClientId = null;
+  document.querySelector('#add-client-form div:first-child').textContent = 'Add new client';
+  document.getElementById('save-client-btn').textContent = 'Save client';
+  ['cl-name','cl-contact','cl-phone','cl-gstin'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cl-ind').value='Pharmaceutical';
+  document.getElementById('cl-name').disabled = false;
+  document.getElementById('add-client-form').style.display='block';
+}
+
+function editClient(id){
+  const c = DB.getArr('clients').find(x=>x.id===id);
+  if(!c) return;
+  editingClientId = id;
+  document.querySelector('#add-client-form div:first-child').textContent = 'Edit client';
+  document.getElementById('save-client-btn').textContent = 'Update client';
+  document.getElementById('cl-name').value    = c.name;
+  document.getElementById('cl-ind').value     = c.industry || 'Pharmaceutical';
+  document.getElementById('cl-contact').value = c.contact || '';
+  document.getElementById('cl-phone').value   = c.phone   || '';
+  document.getElementById('cl-gstin').value   = c.gstin   || '';
+  document.getElementById('cl-name').disabled = false; // name editable for clients
+  document.getElementById('add-client-form').style.display='block';
+  document.getElementById('add-client-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideAddClient(){
+  editingClientId = null;
+  document.getElementById('add-client-form').style.display='none';
+  ['cl-name','cl-contact','cl-phone','cl-gstin'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('cl-ind').value='Pharmaceutical';
+  document.getElementById('cl-name').disabled = false;
+}
+
+function saveClient(){
+  const name    = document.getElementById('cl-name').value.trim();
+  const industry= document.getElementById('cl-ind').value;
+  const contact = document.getElementById('cl-contact').value.trim();
+  const phone   = document.getElementById('cl-phone').value.trim();
+  const gstin   = document.getElementById('cl-gstin').value.trim();
+  if(!name){ toast('Enter client name'); return; }
+  const list = DB.getArr('clients');
+
+  if(editingClientId){
+    const idx = list.findIndex(x=>x.id===editingClientId);
+    if(idx===-1){ toast('Client not found'); return; }
+    if(list.find(x=>x.id!==editingClientId && x.name.toLowerCase()===name.toLowerCase())){ toast('Another client has this name'); return; }
+    list[idx] = { ...list[idx], name, industry, contact, phone, gstin };
+    DB.set('clients', list);
+    toast('Client updated ✓');
+  } else {
+    if(list.find(c=>c.name.toLowerCase()===name.toLowerCase())){ toast('Client already exists'); return; }
+    list.push({ id:'c'+Date.now(), name, industry, contact, phone, gstin });
+    DB.set('clients', list);
+    toast('Client added ✓');
+  }
+
+  hideAddClient();
+  renderClientList();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+function delClient(id){
+  const list = DB.getArr('clients');
+  const c    = list.find(x=>x.id===id);
+  if(!confirm('Remove '+(c?c.name:'this client')+'?')) return;
+  DB.set('clients', list.filter(x=>x.id!==id));
+  if(editingClientId===id) hideAddClient();
+  toast('Client removed ✓');
+  renderClientList();
+  loadAllDropdowns();
+  refreshSettingsCounts();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  STOCK
+// ═══════════════════════════════════════════════════════════
+function loadStock(){
+  const stock=DB.getArr('stock');
+  const el=document.getElementById('stock-list');
+  if(!stock.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📦</div><div class="empty-msg">No materials configured. Add in Settings → Material types.</div></div>'; return; }
+  el.innerHTML = stock.map(s=>{
+    const status = s.current<=s.min*0.5?'critical':s.current<=s.min?'low':'ok';
+    const cls = status==='critical'?'#ef4444':status==='low'?'#f59e0b':'#22c55e';
+    const b   = status==='critical'?'b-red':status==='low'?'b-yellow':'b-green';
+    return `<div class="row"><div class="dot" style="background:${cls}"></div>
+      <div class="row-info"><div class="row-name">${s.material}</div><div class="row-sub">Min alert: ${s.min} kg</div></div>
+      <div class="row-right"><div class="row-val" style="color:${cls}">${s.current.toLocaleString()} kg</div>
+        <div class="badge ${b}" style="margin-top:3px">${status}</div></div></div>`;
+  }).join('');
+  // Hide GRN add for non-managers/accountants
+  const canAdd = currentUser && (currentUser.role==='Manager'||currentUser.role==='Accountant');
+  const grnCard = document.querySelector('#s-stock .card-p');
+  if(grnCard) grnCard.parentElement.style.display = canAdd ? '' : 'none';
+  document.querySelectorAll('#s-stock .sec')[1].style.display = canAdd ? '' : 'none';
+}
+
+function addStock(){
+  const mat=document.getElementById('grn-mat').value;
+  const qty=parseFloat(document.getElementById('grn-qty').value);
+  const by =document.getElementById('grn-by').value;
+  if(!mat){ toast('Select material'); return; }
+  if(!qty||qty<=0){ toast('Enter valid quantity'); return; }
+  if(!by){ toast('Select who is adding'); return; }
+  const stock=DB.getArr('stock');
+  const item=stock.find(s=>s.material===mat);
+  if(item) item.current += qty;
+  else stock.push({material:mat,current:qty,min:200});
+  DB.set('stock',stock);
+  toast(mat+' stock +'+qty+' kg ✓ (added by '+by+')');
+  document.getElementById('grn-qty').value='';
+  loadStock();
+  renderDash();
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ORDERS
+// ═══════════════════════════════════════════════════════════
+let allOrders=[];
+function loadOrders(){
+  allOrders=DB.getArr('orders');
+  renderOrders(allOrders);
+}
+function filterOrders(status,el){
+  document.querySelectorAll('#s-orders .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderOrders(status==='all'?allOrders:allOrders.filter(o=>o.status===status));
+}
+function renderOrders(orders){
+  const el=document.getElementById('orders-list');
+  if(!orders.length){ el.innerHTML='<div class="empty"><div class="empty-icon">📋</div><div class="empty-msg">No orders</div></div>'; return; }
+  el.innerHTML=orders.map(o=>{
+    const bc = o.status==='Pending'?'b-red':o.status==='In Progress'?'b-yellow':'b-green';
+    const dc = o.status==='Pending'?'#ef4444':o.status==='In Progress'?'#f59e0b':'#22c55e';
+    return `<div class="row"><div class="dot" style="background:${dc}"></div>
+      <div class="row-info"><div class="row-name">${o.client}</div><div class="row-sub">${o.material} · ${o.thickness}µ · ${o.quantity} ${o.unit}</div></div>
+      <div class="row-right"><div style="font-size:11px;color:var(--muted)">Due: ${o.due_date}</div><div class="badge ${bc}" style="margin-top:3px">${o.status}</div></div></div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  REPORTS / ARCHIVE
+// ═══════════════════════════════════════════════════════════
+function loadReports(){
+  const cur=getCurrentFY();
+  const fyList=[cur,'FY2425','FY2324'];
+  const fyEl=document.getElementById('fy-list');
+  fyEl.innerHTML = fyList.map(fy=>{
+    const isCur = fy===cur;
+    return `<div class="fy-card">
+      <div class="fy-icon">${isCur?'📂':'🗃️'}</div>
+      <div class="fy-info"><div class="fy-label">${fy} ${isCur?'<span class="badge b-green" style="font-size:9px">Current</span>':'<span class="badge b-gray" style="font-size:9px">Archived</span>'}</div>
+      <div class="fy-range">${fyDisplay(fy)}</div></div>
+      <button class="btn btn-outline btn-sm" style="margin:0;padding:6px 10px;font-size:11px" onclick="viewFY('${fy}')">View</button>
+    </div>`;
+  }).join('');
+  // archive select = previous FYs only
+  const prevFYs=fyList.filter(f=>f!==cur);
+  document.getElementById('arch-sel').innerHTML = prevFYs.map(f=>`<option value="${f}">${f} · ${fyDisplay(f)}</option>`).join('');
+  document.getElementById('rep-fy').innerHTML     = fyList.map(f=>`<option value="${f}">${f} · ${fyDisplay(f)}</option>`).join('');
+  document.getElementById('rep-dis-fy').innerHTML = fyList.map(f=>`<option value="${f}">${f} · ${fyDisplay(f)}</option>`).join('');
+  loadProdReport();
+  loadDisReport();
+}
+
+function switchRep(el,id){
+  document.querySelectorAll('#s-reports .pills .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  ['rp-fy','rp-prod','rp-dis'].forEach(t=>document.getElementById(t).style.display = t===id?'block':'none');
+}
+
+function viewFY(fy){
+  switchRep(document.querySelectorAll('#s-reports .pills .pill')[1], 'rp-prod');
+  document.getElementById('rep-fy').value=fy;
+  loadProdReport();
+}
+
+function loadProdReport(){
+  const fy=document.getElementById('rep-fy').value || getCurrentFY();
+  const isCur = fy===getCurrentFY();
+  const t = DB.get('today_stats')||{extruded:0,bags:0};
+  const data = isCur
+    ? {total_extruded_kg:t.extruded*22, total_bags:t.bags*22, material_wise:{HDPE:t.extruded*9,PP:t.extruded*8,LDPE:t.extruded*5}}
+    : {total_extruded_kg:142000, total_bags:820000, material_wise:{HDPE:80000,PP:42000,LDPE:20000}};
+  document.getElementById('prod-rep').innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="stat-val">${data.total_extruded_kg.toLocaleString()}</div><div class="stat-lbl">kg extruded</div></div>
+      <div class="stat"><div class="stat-val">${data.total_bags.toLocaleString()}</div><div class="stat-lbl">bags produced</div></div>
+    </div>
+    <div class="sec">Material-wise</div>
+    <div class="card">${Object.entries(data.material_wise).map(([m,kg])=>
+      `<div class="row"><div class="row-info"><div class="row-name">${m}</div></div><div class="row-right"><div class="row-val">${kg.toLocaleString()} kg</div></div></div>`
+    ).join('')}</div>`;
+}
+
+function loadDisReport(){
+  const fy=document.getElementById('rep-dis-fy').value || getCurrentFY();
+  const isCur=fy===getCurrentFY();
+  const data = isCur
+    ? {total_qty:8400*22, client_wise:{'Cipla Ltd.':5000,'Arvind Mills':3400,'Sun Pharma':2000,'Mafatlal Fab.':2000}}
+    : {total_qty:18400, client_wise:{'Cipla Ltd.':8000,'Arvind Mills':5400,'Sun Pharma':3200,'Mafatlal Fab.':1800}};
+  document.getElementById('dis-rep').innerHTML = `
+    <div class="stats" style="grid-template-columns:1fr"><div class="stat"><div class="stat-val">${data.total_qty.toLocaleString()}</div><div class="stat-lbl">total dispatched</div></div></div>
+    <div class="sec">Client-wise</div>
+    <div class="card">${Object.entries(data.client_wise).map(([c,q])=>
+      `<div class="row"><div class="row-info"><div class="row-name">${c}</div></div><div class="row-right"><div class="row-val">${q.toLocaleString()}</div></div></div>`
+    ).join('')}</div>`;
+}
+
+function doArchive(){
+  const fy=document.getElementById('arch-sel').value;
+  if(!fy){ toast('Select a financial year'); return; }
+  if(!confirm('Archive '+fy+'? Moves data to read-only sheets (requires Google Sheets connection in production).')) return;
+  toast('✓ '+fy+' archived (demo) — connect Google Sheets for real archiving');
+}
+
+// ═══════════════════════════════════════════════════════════
+//  FORM SUBMISSIONS — Log Work
+// ═══════════════════════════════════════════════════════════
+function switchTab(el,tabId){
+  document.querySelectorAll('#log-tabs .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['t-ext','t-cut','t-dis','t-att'].forEach(id=>{
+    const t=document.getElementById(id);
+    if(t) t.style.display = id===tabId?'block':'none';
+  });
+}
+
+function submitExtrusion(){
+  const op=document.getElementById('ext-op').value;
+  const mc=document.getElementById('ext-machine').value;
+  const mat=document.getElementById('ext-mat').value;
+  const out=parseFloat(document.getElementById('ext-output').value)||0;
+  const cons=parseFloat(document.getElementById('ext-consumed').value)||0;
+  if(!op||!mc||!mat){ toast('Fill required fields'); return; }
+
+  // Deduct stock
+  if(cons>0){
+    const stock=DB.getArr('stock');
+    const item=stock.find(s=>s.material===mat);
+    if(item){ item.current=Math.max(0,item.current-cons); DB.set('stock',stock); }
+  }
+  // Update today stats
+  const t=DB.get('today_stats')||{extruded:0,bags:0};
+  t.extruded += out;
+  DB.set('today_stats',t);
+
+  toast('Extrusion logged ✓ ('+mc+', '+out+' kg)');
+  ['ext-consumed','ext-output','ext-width','ext-thick','ext-waste','ext-rem'].forEach(id=>document.getElementById(id).value='');
+  renderDash();
+}
+
+function submitCutting(){
+  const op=document.getElementById('cut-op').value;
+  const bags=parseInt(document.getElementById('cut-bags').value)||0;
+  if(!op){ toast('Select operator'); return; }
+  if(!bags){ toast('Enter bags produced'); return; }
+
+  const t=DB.get('today_stats')||{extruded:0,bags:0};
+  t.bags += bags;
+  DB.set('today_stats',t);
+
+  toast('Cutting logged ✓ ('+bags+' bags)');
+  ['cut-size','cut-bags','cut-waste','cut-rem'].forEach(id=>document.getElementById(id).value='');
+  renderDash();
+}
+
+function submitDispatch(){
+  const client=document.getElementById('dis-client').value;
+  const qty=parseFloat(document.getElementById('dis-qty').value)||0;
+  const gate=document.getElementById('dis-gate').value;
+  if(!client||!qty||!gate){ toast('Fill required fields'); return; }
+
+  // Mark order as Ready/dispatched if matches
+  const orders=DB.getArr('orders');
+  const ord=orders.find(o=>o.client===client && o.status!=='Ready');
+  if(ord){ ord.status='Ready'; DB.set('orders',orders); }
+
+  toast('Dispatch recorded ✓ ('+client+', '+qty+' '+document.getElementById('dis-unit').value+')');
+  ['dis-qty','dis-veh','dis-drv','dis-ch','dis-rem'].forEach(id=>document.getElementById(id).value='');
+  renderDash();
+}
+
+function submitAttendance(){
+  const emp=document.getElementById('att-emp').value;
+  if(!emp){ toast('Select employee'); return; }
+  const status=document.getElementById('att-status').value;
+  const empName = (DB.getArr('employees').find(e=>e.id===emp)||{}).name||'';
+  toast('Attendance marked ✓ ('+empName+' — '+status+')');
+  document.getElementById('att-rem').value='';
+  document.getElementById('att-in').value='';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  COMPANY / TALLY / SHEETS / AI SETTINGS
+// ═══════════════════════════════════════════════════════════
+function loadCompanyForm(){
+  const c=DB.get('company')||{};
+  document.getElementById('co-name').value =c.name||'';
+  document.getElementById('co-a1').value   =c.addr1||'';
+  document.getElementById('co-a2').value   =c.addr2||'';
+  document.getElementById('co-city').value =c.city||'';
+  if(c.state) document.getElementById('co-state').value=c.state;
+  document.getElementById('co-pin').value  =c.pin||'';
+  document.getElementById('co-phone').value=c.phone||'';
+  document.getElementById('co-email').value=c.email||'';
+  document.getElementById('co-gstin').value=c.gstin||'';
+  document.getElementById('co-cst').value  =c.cst||'';
+  document.getElementById('co-pan').value  =c.pan||'';
+  document.getElementById('co-udyam').value=c.udyam||'';
+}
+function saveCompany(){
+  DB.set('company',{
+    name:document.getElementById('co-name').value,
+    addr1:document.getElementById('co-a1').value,
+    addr2:document.getElementById('co-a2').value,
+    city:document.getElementById('co-city').value,
+    state:document.getElementById('co-state').value,
+    pin:document.getElementById('co-pin').value,
+    phone:document.getElementById('co-phone').value,
+    email:document.getElementById('co-email').value,
+    gstin:document.getElementById('co-gstin').value,
+    cst:document.getElementById('co-cst').value,
+    pan:document.getElementById('co-pan').value,
+    udyam:document.getElementById('co-udyam').value,
+  });
+  toast('Company profile saved ✓');
+  document.getElementById('co-display').textContent = document.getElementById('co-name').value;
+  nav('s-settings');
+}
+
+function loadTallyForm(){
+  const t=DB.get('tally')||{};
+  document.getElementById('t-ip').value  =t.ip||'';
+  document.getElementById('t-port').value=t.port||'9000';
+  document.getElementById('t-co').value  =t.company||'';
+  if(t.version) document.getElementById('t-ver').value=t.version;
+  if(t.sync)    document.getElementById('t-sync').value=t.sync;
+}
+function saveTally(){
+  DB.set('tally',{
+    ip:document.getElementById('t-ip').value,
+    port:document.getElementById('t-port').value,
+    company:document.getElementById('t-co').value,
+    version:document.getElementById('t-ver').value,
+    sync:document.getElementById('t-sync').value,
+  });
+  toast('Tally settings saved ✓');
+  nav('s-settings');
+}
+function testTally(){
+  const ip=document.getElementById('t-ip').value;
+  if(!ip){ toast('Enter Tally IP first'); return; }
+  toast('Testing '+ip+':'+document.getElementById('t-port').value+'…');
+  setTimeout(()=>{
+    const conn=document.getElementById('tally-conn-status');
+    conn.className='conn conn-ok';
+    conn.innerHTML=`<div class="dot" style="width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0"></div>
+      <div><div class="conn-lbl conn-lbl-ok">Connected (demo)</div><div class="conn-sub">Deploy Apps Script for live connection</div></div>`;
+    toast('✓ Connection test passed (demo mode)');
+  },1200);
+}
+
+function loadTallyData(){
+  document.getElementById('tv-ord-body').innerHTML = DB.getArr('orders').map(o=>
+    `<tr><td><b>${o.client}</b></td><td>${o.material} ${o.thickness}µ</td><td>${o.quantity} ${o.unit}</td><td>${o.due_date}</td><td><span class="badge ${o.status==='Pending'?'b-red':o.status==='In Progress'?'b-yellow':'b-green'}">${o.status}</span></td></tr>`
+  ).join('');
+  document.getElementById('tv-stk-body').innerHTML = DB.getArr('stock').map(s=>{
+    const tally = s.current + (Math.random()>0.5?5:-2);
+    const diff  = s.current - tally;
+    const dc = diff<0?'#ef4444':diff>0?'#d97706':'#16a34a';
+    return `<tr><td><b>${s.material}</b></td><td>${tally} kg</td><td>${s.current} kg</td><td style="color:${dc};font-weight:700">${diff>0?'+':''}${diff}</td></tr>`;
+  }).join('');
+  document.getElementById('tally-sync-time').textContent='Last sync: '+new Date().toLocaleTimeString('en-IN');
+}
+function switchTally(el,id){
+  document.querySelectorAll('#s-tally-data .pills .pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  ['tv-ord','tv-po','tv-stk','tv-par'].forEach(t=>{
+    const el2=document.getElementById(t);
+    if(el2) el2.style.display = t===id?'':'none';
+  });
+}
+function syncTally(){
+  toast('Syncing from Tally…');
+  setTimeout(()=>{ toast('✓ Synced (demo) — connect Apps Script for live data'); loadTallyData(); },1200);
+}
+
+function loadSheetsForm(){
+  const s=DB.get('sheets')||{};
+  document.getElementById('sh-url').value=s.url||'';
+  document.getElementById('sh-id').value =s.id||'';
+}
+function saveSheets(){
+  DB.set('sheets',{url:document.getElementById('sh-url').value,id:document.getElementById('sh-id').value});
+  toast('Google Sheets config saved ✓');
+  nav('s-settings');
+}
+
+function saveAI(){
+  DB.set('ai',{lang:document.getElementById('ai-lang').value});
+  toast('AI settings saved ✓');
+  nav('s-settings');
+}
+
+function toggleEye(id){
+  const i=document.getElementById(id);
+  i.type = i.type==='password'?'text':'password';
+}
+
+// ═══════════════════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════════════════
+let toastTimer;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════════
+async function init(){
+  // If old session stored Promise objects as pinHash strings, clear and re-seed
+  const existing = DB.getArr('employees');
+  const corrupt  = existing.length && existing.some(e => !e.pinHash || e.pinHash.startsWith('[object') || e.pinHash.length < 32);
+  if(corrupt){
+    ['employees','seeded'].forEach(k=>localStorage.removeItem('pp_'+k));
+  }
+  await seedDemoData();
+  buildLoginDropdown();
+  const ai=DB.get('ai'); if(ai&&ai.lang) document.getElementById('ai-lang').value=ai.lang;
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
