@@ -43,6 +43,7 @@ html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-s
 .a-red{background:#fef2f2;border:1px solid #fecaca;color:#991b1b}
 .a-yellow{background:#fffbeb;border:1px solid #fde68a;color:#92400e}
 .a-green{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.a-blue{background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
 .row{display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid #f4f5fb;gap:10px;cursor:pointer}
 .row:last-child{border-bottom:none}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
@@ -362,14 +363,24 @@ tr:last-child td{border-bottom:none}
     <div class="card" id="stock-list"><div class="spinner"></div></div>
     <div class="sec">Add stock (GRN)</div>
     <div class="card card-p">
+      <div class="fg"><label class="fl">Tally item name (as purchased) <span class="req">*</span></label>
+        <input class="fi" id="grn-tally-item" type="text" placeholder="e.g. HM Granules, PP Dana"
+          onblur="autoMapTallyItem()"/>
+        <div class="hint" id="grn-map-hint">Type the name exactly as it appears in your Tally purchase bill</div></div>
       <div class="frow" style="margin-bottom:10px">
-        <div class="fg"><label class="fl">Material</label>
+        <div class="fg"><label class="fl">Actual material type <span class="req">*</span></label>
           <select class="fi" id="grn-mat"><option value="">— Select —</option></select></div>
         <div class="fg"><label class="fl">Qty (kg)</label><input class="fi" id="grn-qty" type="number" min="0" placeholder="500"/></div>
       </div>
       <div class="fg" style="margin-bottom:12px"><label class="fl">Added by</label>
         <select class="fi" id="grn-by"><option value="">— Select —</option></select></div>
       <button class="btn btn-gold btn-sm" onclick="addStock()">+ Add to stock</button>
+    </div>
+    <div class="sec">Tally item mapping <span class="sec-act" onclick="nav('s-master-tallymap')">Manage</span></div>
+    <div class="card card-p">
+      <div style="font-size:12px;color:var(--muted);line-height:1.5">
+        Tally often shows raw material as <b>"Granules"</b> with a supplier item name. Map each Tally item name to its actual material type (HDPE/PP/LDPE/etc) once — after that, GRN entries and Tally sync auto-fill the correct type.
+      </div>
     </div>
   </div>
 </div>
@@ -449,13 +460,14 @@ tr:last-child td{border-bottom:none}
       <div class="sitem" onclick="nav('s-master-mc')"><div class="sicon" style="background:#eff6ff">⚙️</div><div class="sinfo"><div class="sinfo-title">Machines</div><div class="sinfo-sub" id="mc-count-lbl">Extruders, cutting machines</div></div><span class="chev">›</span></div>
       <div class="sitem" onclick="nav('s-master-mat')"><div class="sicon" style="background:#f0fdf4">🧪</div><div class="sinfo"><div class="sinfo-title">Material types</div><div class="sinfo-sub" id="mat-count-lbl">HDPE, LDPE, PP etc.</div></div><span class="chev">›</span></div>
       <div class="sitem" onclick="nav('s-master-client')"><div class="sicon" style="background:#faf5ff">🏢</div><div class="sinfo"><div class="sinfo-title">Clients</div><div class="sinfo-sub" id="client-count-lbl">Cipla, Arvind Mills etc.</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-master-tallymap')"><div class="sicon" style="background:#fef9c3">🔄</div><div class="sinfo"><div class="sinfo-title">Tally item mapping</div><div class="sinfo-sub" id="tmap-count-lbl">Granules → actual material type</div></div><span class="chev">›</span></div>
     </div>
     <div class="sec">Company &amp; connections</div>
     <div class="card">
       <div class="sitem" onclick="nav('s-company')"><div class="sicon" style="background:#eff6ff">🏭</div><div class="sinfo"><div class="sinfo-title">Company profile</div><div class="sinfo-sub">Name, address, GSTIN, CST, PAN</div></div><span class="chev">›</span></div>
       <div class="sitem" onclick="nav('s-tally')"><div class="sicon" style="background:#f0fdf4">🔗</div><div class="sinfo"><div class="sinfo-title">Tally connection</div><div class="sinfo-sub">IP, port, company name</div></div><span class="chev">›</span></div>
       <div class="sitem" onclick="nav('s-sheets')"><div class="sicon" style="background:#f0fdf4">📋</div><div class="sinfo"><div class="sinfo-title">Google Sheets</div><div class="sinfo-sub">Script URL, sheet names</div></div><span class="chev">›</span></div>
-      <div class="sitem" onclick="nav('s-ai')"><div class="sicon" style="background:#faf5ff">🤖</div><div class="sinfo"><div class="sinfo-title">AI assistant</div><div class="sinfo-sub">Anthropic key, language</div></div><span class="chev">›</span></div>
+      <div class="sitem" onclick="nav('s-ai')"><div class="sicon" style="background:#faf5ff">🤖</div><div class="sinfo"><div class="sinfo-title">AI assistant</div><div class="sinfo-sub">OpenRouter / Anthropic key, model, chat</div></div><span class="chev">›</span></div>
     </div>
     <div class="sec">Current FY &amp; demo</div>
     <div class="card card-p">
@@ -576,6 +588,34 @@ tr:last-child td{border-bottom:none}
       <div class="btn-row">
         <button class="btn btn-navy btn-sm" id="save-client-btn" onclick="saveClient()">Save client</button>
         <button class="btn btn-outline btn-sm" onclick="hideAddClient()" style="margin:0">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MASTER: TALLY ITEM MAPPING ═══════════════════════════ -->
+<div class="screen" id="s-master-tallymap">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">Tally item mapping</span>
+    <span class="tact" onclick="showAddTmap()">+ Add</span>
+  </div></div>
+  <div class="scroll">
+    <div class="alert a-blue" style="margin:10px 12px 0">
+      <div class="alert-icon">💡</div>
+      <div>Tally purchase entries often say "Granules" or a supplier code. Map each name here to the actual material type used on the floor (HDPE, PP, LDPE, HD Natural). GRN entry and Tally sync will auto-fill using this list.</div>
+    </div>
+    <div class="card" id="tmap-list" style="margin-top:10px"></div>
+    <div class="card card-p" id="add-tmap-form" style="display:none">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">Add mapping</div>
+      <div class="fg"><label class="fl">Tally item name <span class="req">*</span></label>
+        <input class="fi" id="tmap-tally-name" type="text" placeholder="e.g. HM Granules"/>
+        <div class="hint">Exactly as it appears in Tally purchase voucher / stock item</div></div>
+      <div class="fg"><label class="fl">Actual material type <span class="req">*</span></label>
+        <select class="fi" id="tmap-material"><option value="">— Select —</option></select></div>
+      <div class="btn-row">
+        <button class="btn btn-navy btn-sm" id="save-tmap-btn" onclick="saveTallyMap()">Save mapping</button>
+        <button class="btn btn-outline btn-sm" onclick="hideAddTmap()" style="margin:0">Cancel</button>
       </div>
     </div>
   </div>
@@ -703,14 +743,51 @@ tr:last-child td{border-bottom:none}
     <span class="topbar-title">AI assistant</span>
   </div></div>
   <div class="scroll"><div class="form">
-    <div class="fg"><label class="fl">Anthropic API key</label>
-      <div class="inp-wrap"><input class="fi fi-mono" id="ai-key" type="password" placeholder="sk-ant-api03-..." style="font-size:12px"/><button class="eye" onclick="toggleEye('ai-key')">👁</button></div>
-      <div class="hint">Get from console.anthropic.com</div></div>
+    <div class="fg"><label class="fl">AI provider <span class="req">*</span></label>
+      <select class="fi" id="ai-provider" onchange="onAiProviderChange()">
+        <option value="openrouter">OpenRouter (recommended — many models)</option>
+        <option value="anthropic">Anthropic (Claude direct)</option>
+        <option value="openai">OpenAI (direct)</option>
+      </select>
+      <div class="hint">OpenRouter lets you switch between Claude, GPT, Gemini, Llama etc. with one key</div></div>
+
+    <div class="fg"><label class="fl">API key <span class="req">*</span></label>
+      <div class="inp-wrap"><input class="fi fi-mono" id="ai-key" type="password" placeholder="sk-or-v1-..." style="font-size:12px"/><button class="eye" onclick="toggleEye('ai-key')">👁</button></div>
+      <div class="hint" id="ai-key-hint">Get a free key from openrouter.ai/keys</div></div>
+
+    <div class="fg"><label class="fl">Model</label>
+      <input class="fi fi-mono" id="ai-model" type="text" placeholder="anthropic/claude-sonnet-4.5" style="font-size:12px"/>
+      <div class="hint" id="ai-model-hint">OpenRouter model id — e.g. anthropic/claude-sonnet-4.5, openai/gpt-4o-mini, google/gemini-2.5-flash</div></div>
+
     <div class="fg"><label class="fl">Response language</label>
       <select class="fi" id="ai-lang"><option value="hinglish">Hindi + English (Hinglish)</option><option value="english">English only</option><option value="hindi">Hindi only</option></select></div>
+
+    <div class="btn-row">
+      <button class="btn btn-outline btn-sm" style="margin:0" onclick="testAiConnection()">Test connection</button>
+      <button class="btn btn-gold btn-sm" onclick="nav('s-ai-chat')">Open AI chat →</button>
+    </div>
+    <div style="height:10px"></div>
     <button class="btn btn-navy" onclick="saveAI()">Save</button>
     <button class="btn btn-outline" onclick="nav('s-settings')">Cancel</button>
   </div></div>
+</div>
+
+<!-- ═══ AI CHAT ══════════════════════════════════════════════ -->
+<div class="screen" id="s-ai-chat">
+  <div class="topbar"><div class="topbar-inner">
+    <span class="back" onclick="nav('s-settings')">←</span>
+    <span class="topbar-title">AI assistant</span>
+    <span class="tact" onclick="clearAiChat()">Clear</span>
+  </div></div>
+  <div class="scroll" id="ai-chat-msgs" style="padding:12px">
+    <div class="empty"><div class="empty-icon">🤖</div><div class="empty-msg">Ask about stock, orders, production — e.g. "HDPE stock kitna hai?" or "Pending orders dikhao"</div></div>
+  </div>
+  <div style="padding:10px 12px;border-top:1px solid var(--border);background:var(--card)">
+    <div class="frow" style="gap:8px">
+      <input class="fi" id="ai-chat-input" type="text" placeholder="Type your question..." style="flex:1" onkeydown="if(event.key==='Enter')sendAiChat()"/>
+      <button class="btn btn-navy btn-sm" style="margin:0;flex-shrink:0" onclick="sendAiChat()">Send</button>
+    </div>
+  </div>
 </div>
 
 </div><!-- #app -->
@@ -786,6 +863,14 @@ async function seedDemoData(force){
       {id:'c3',name:'Sun Pharma',industry:'Pharmaceutical',contact:'Vivek Shah',phone:'9900003333',gstin:'24AAACS1809B1ZG'},
       {id:'c4',name:'Mafatlal Fab.',industry:'Garments/Textile',contact:'Rohit Mafatlal',phone:'9900004444',gstin:'24AAACM0010K1Z4'},
     ]);
+    DB.set('tallymap',[
+      {id:'tm1',tallyName:'HM Granules',material:'HDPE'},
+      {id:'tm2',tallyName:'LD Granules',material:'LDPE'},
+      {id:'tm3',tallyName:'PP Granules',material:'PP'},
+      {id:'tm4',tallyName:'PP Dana',material:'PP'},
+      {id:'tm5',tallyName:'HD Natural Granules',material:'HD Natural'},
+      {id:'tm6',tallyName:'Reprocess Granules',material:'LDPE'},
+    ]);
     DB.set('stock',[
       {material:'HDPE',current:180,min:200},
       {material:'LDPE',current:230,min:150},
@@ -798,7 +883,7 @@ async function seedDemoData(force){
       {id:'ORD-003',client:'Sun Pharma',material:'LDPE',thickness:'60',size:'Roll',quantity:200,unit:'kg',due_date:'18/06/2026',status:'Pending'},
       {id:'ORD-004',client:'Mafatlal Fab.',material:'HDPE',thickness:'150',size:'25×38 cm',quantity:2000,unit:'pcs',due_date:'22/06/2026',status:'Pending'},
     ]);
-    DB.set('company',{name:'ASKAS Plastic Private Limited',addr1:'Plot 99 A, Industrial Area, No 1',addr2:'A.B. Road',city:'Dewas',state:'Madhya Pradesh',pin:'455001',phone:'+91 94250 47811',email:'accounts@polypack.in',gstin:'23ABCDE1234F1Z8',cst:'MP/CST/2019/4421',pan:'ABCDE1234F',udyam:''});
+    DB.set('company',{name:'PolyPack Industries',addr1:'Plot 14, Industrial Area, Sector 3',addr2:'Sanwer Road',city:'Indore',state:'Madhya Pradesh',pin:'452015',phone:'+91 98765 43210',email:'accounts@polypack.in',gstin:'23ABCDE1234F1Z8',cst:'MP/CST/2019/4421',pan:'ABCDE1234F',udyam:''});
     DB.set('today_stats',{extruded:1240,bags:8400});
     DB.set('seeded',true);
   }
@@ -806,7 +891,7 @@ async function seedDemoData(force){
 
 async function resetDemoData(){
   if(!confirm('Reset all demo data? This restores employees, machines, materials, clients, stock & orders to factory defaults. Company profile & connection settings are kept.')) return;
-  ['employees','machines','materials','clients','stock','orders','today_stats','seeded'].forEach(k=>localStorage.removeItem('pp_'+k));
+  ['employees','machines','materials','clients','stock','orders','today_stats','tallymap','seeded'].forEach(k=>localStorage.removeItem('pp_'+k));
   await seedDemoData(true);
   toast('Demo data reset ✓');
   loadAllDropdowns();
@@ -1033,9 +1118,11 @@ function nav(id){
   if(id==='s-master-mc')     renderMcList();
   if(id==='s-master-mat')    renderMatList();
   if(id==='s-master-client') renderClientList();
+  if(id==='s-master-tallymap') renderTmapList();
   if(id==='s-company')       loadCompanyForm();
   if(id==='s-tally')         loadTallyForm();
   if(id==='s-sheets')        loadSheetsForm();
+  if(id==='s-ai')             loadAIForm();
   if(id==='s-log'){ loadAllDropdowns(); applyRoleUI(); }
 }
 
@@ -1151,14 +1238,16 @@ function loadAllDropdowns(){
   fillSelect('grn-by',  emps, e=>e.name, e=>e.name, '— Select —');
 
   fillSelect('emp-mc', mcs.filter(m=>m.status==='Active'), m=>m.name, m=>m.name+'  ('+m.type+')', '— None —');
+  fillSelect('tmap-material', mats, m=>m.name, m=>m.name, '— Select —');
 }
 
 function refreshSettingsCounts(){
-  const e=DB.getArr('employees'), m=DB.getArr('machines'), mat=DB.getArr('materials'), c=DB.getArr('clients');
+  const e=DB.getArr('employees'), m=DB.getArr('machines'), mat=DB.getArr('materials'), c=DB.getArr('clients'), tm=DB.getArr('tallymap');
   document.getElementById('emp-count-lbl').textContent    = e.length+' employee'+(e.length!==1?'s':'');
   document.getElementById('mc-count-lbl').textContent     = m.length+' machine'+(m.length!==1?'s':'');
   document.getElementById('mat-count-lbl').textContent    = mat.length+' material type'+(mat.length!==1?'s':'');
   document.getElementById('client-count-lbl').textContent = c.length+' client'+(c.length!==1?'s':'');
+  document.getElementById('tmap-count-lbl').textContent   = tm.length+' mapping'+(tm.length!==1?'s':'');
   document.getElementById('cur-fy').textContent           = getCurrentFY();
 }
 
@@ -1612,6 +1701,129 @@ function delClient(id){
 }
 
 // ═══════════════════════════════════════════════════════════
+//  MASTER: TALLY ITEM MAPPING  (Add · Edit · Delete)
+//  Maps a Tally purchase item name (often "Granules") to the
+//  actual material type used on the production floor.
+// ═══════════════════════════════════════════════════════════
+let editingTmapId = null;
+
+function renderTmapList(){
+  const list = DB.getArr('tallymap');
+  const el   = document.getElementById('tmap-list');
+  if(!list.length){ el.innerHTML='<div class="empty"><div class="empty-icon">🔄</div><div class="empty-msg">No mappings yet. Tap + Add.</div></div>'; return; }
+  el.innerHTML = list.map(t=>`
+    <div class="mitem">
+      <div class="mitem-icon">🔄</div>
+      <div class="mitem-info">
+        <div class="mitem-name">${t.tallyName}</div>
+        <div class="mitem-sub">→ ${t.material}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="mitem-edit" onclick="editTmap('${t.id}')">✏️</button>
+        <button class="mitem-del"  onclick="delTmap('${t.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+function showAddTmap(){
+  editingTmapId = null;
+  document.querySelector('#add-tmap-form div:first-child').textContent = 'Add mapping';
+  document.getElementById('save-tmap-btn').textContent = 'Save mapping';
+  document.getElementById('tmap-tally-name').value='';
+  document.getElementById('tmap-tally-name').disabled=false;
+  document.getElementById('tmap-material').value='';
+  loadAllDropdowns();
+  document.getElementById('add-tmap-form').style.display='block';
+}
+
+function editTmap(id){
+  const t = DB.getArr('tallymap').find(x=>x.id===id);
+  if(!t) return;
+  editingTmapId = id;
+  document.querySelector('#add-tmap-form div:first-child').textContent = 'Edit mapping';
+  document.getElementById('save-tmap-btn').textContent = 'Update mapping';
+  loadAllDropdowns();
+  document.getElementById('tmap-tally-name').value = t.tallyName;
+  document.getElementById('tmap-tally-name').disabled = false;
+  setTimeout(()=>{ document.getElementById('tmap-material').value = t.material; }, 30);
+  document.getElementById('add-tmap-form').style.display='block';
+  document.getElementById('add-tmap-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function hideAddTmap(){
+  editingTmapId = null;
+  document.getElementById('add-tmap-form').style.display='none';
+  document.getElementById('tmap-tally-name').value='';
+  document.getElementById('tmap-material').value='';
+}
+
+function saveTallyMap(){
+  const tallyName = document.getElementById('tmap-tally-name').value.trim();
+  const material  = document.getElementById('tmap-material').value;
+  if(!tallyName){ toast('Enter the Tally item name'); return; }
+  if(!material){ toast('Select the actual material type'); return; }
+  const list = DB.getArr('tallymap');
+
+  if(editingTmapId){
+    const idx = list.findIndex(x=>x.id===editingTmapId);
+    if(idx===-1){ toast('Mapping not found'); return; }
+    if(list.find(x=>x.id!==editingTmapId && x.tallyName.toLowerCase()===tallyName.toLowerCase())){ toast('This Tally item is already mapped'); return; }
+    list[idx] = { ...list[idx], tallyName, material };
+    DB.set('tallymap', list);
+    toast('Mapping updated ✓');
+  } else {
+    if(list.find(x=>x.tallyName.toLowerCase()===tallyName.toLowerCase())){ toast('This Tally item is already mapped'); return; }
+    list.push({ id:'tm'+Date.now(), tallyName, material });
+    DB.set('tallymap', list);
+    toast('Mapping added ✓');
+  }
+
+  hideAddTmap();
+  renderTmapList();
+  refreshSettingsCounts();
+}
+
+function delTmap(id){
+  const list = DB.getArr('tallymap');
+  const t = list.find(x=>x.id===id);
+  if(!confirm('Remove mapping for "'+(t?t.tallyName:'this item')+'"?')) return;
+  DB.set('tallymap', list.filter(x=>x.id!==id));
+  if(editingTmapId===id) hideAddTmap();
+  toast('Mapping removed ✓');
+  renderTmapList();
+  refreshSettingsCounts();
+}
+
+// ── Auto-map: GRN form "Tally item name" → suggest material type ──
+function autoMapTallyItem(){
+  const typed = document.getElementById('grn-tally-item').value.trim();
+  const hint  = document.getElementById('grn-map-hint');
+  const matSel= document.getElementById('grn-mat');
+  if(!typed){ hint.textContent='Type the name exactly as it appears in your Tally purchase bill'; hint.style.color=''; return; }
+
+  const list  = DB.getArr('tallymap');
+  const exact = list.find(t=>t.tallyName.toLowerCase()===typed.toLowerCase());
+
+  if(exact){
+    matSel.value = exact.material;
+    hint.textContent = '✓ Auto-mapped: "'+exact.tallyName+'" → '+exact.material;
+    hint.style.color = '#16a34a';
+  } else {
+    hint.innerHTML = '⚠ Not mapped yet — select material manually below, or <a style="color:var(--blue);font-weight:600;cursor:pointer" onclick="quickAddTmap(\\''+typed.replace(/'/g,"\\\\'")+'\\')">add this mapping</a> for next time';
+    hint.style.color = '#d97706';
+  }
+}
+
+// ── Quick-add a new mapping directly from the GRN screen ──
+function quickAddTmap(tallyName){
+  nav('s-master-tallymap');
+  setTimeout(()=>{
+    showAddTmap();
+    document.getElementById('tmap-tally-name').value = tallyName;
+  }, 100);
+}
+
+
 //  STOCK
 // ═══════════════════════════════════════════════════════════
 function loadStock(){
@@ -1635,10 +1847,12 @@ function loadStock(){
 }
 
 function addStock(){
+  const tallyItem=document.getElementById('grn-tally-item').value.trim();
   const mat=document.getElementById('grn-mat').value;
   const qty=parseFloat(document.getElementById('grn-qty').value);
   const by =document.getElementById('grn-by').value;
-  if(!mat){ toast('Select material'); return; }
+  if(!tallyItem){ toast('Enter the Tally item name as purchased'); return; }
+  if(!mat){ toast('Select the actual material type'); return; }
   if(!qty||qty<=0){ toast('Enter valid quantity'); return; }
   if(!by){ toast('Select who is adding'); return; }
   const stock=DB.getArr('stock');
@@ -1646,8 +1860,12 @@ function addStock(){
   if(item) item.current += qty;
   else stock.push({material:mat,current:qty,min:200});
   DB.set('stock',stock);
-  toast(mat+' stock +'+qty+' kg ✓ (added by '+by+')');
+  toast('"'+tallyItem+'" → '+mat+' +'+qty+' kg ✓ (added by '+by+')');
+  document.getElementById('grn-tally-item').value='';
   document.getElementById('grn-qty').value='';
+  document.getElementById('grn-mat').value='';
+  document.getElementById('grn-map-hint').textContent='Type the name exactly as it appears in your Tally purchase bill';
+  document.getElementById('grn-map-hint').style.color='';
   loadStock();
   renderDash();
 }
@@ -1936,10 +2154,177 @@ function saveSheets(){
   nav('s-settings');
 }
 
+// ═══════════════════════════════════════════════════════════
+//  AI ASSISTANT — OpenRouter / Anthropic / OpenAI
+// ═══════════════════════════════════════════════════════════
+const AI_DEFAULTS = {
+  openrouter: { url:'https://openrouter.ai/api/v1/chat/completions', model:'anthropic/claude-sonnet-4.5', keyHint:'Get a free key from openrouter.ai/keys (starts with sk-or-v1-)', modelHint:'OpenRouter model id — e.g. anthropic/claude-sonnet-4.5, openai/gpt-4o-mini, google/gemini-2.5-flash' },
+  anthropic:  { url:'https://api.anthropic.com/v1/messages',        model:'claude-sonnet-4-6',     keyHint:'Get from console.anthropic.com (starts with sk-ant-)', modelHint:'Anthropic model id — e.g. claude-sonnet-4-6, claude-opus-4-6' },
+  openai:     { url:'https://api.openai.com/v1/chat/completions',   model:'gpt-4o-mini',           keyHint:'Get from platform.openai.com/api-keys (starts with sk-)', modelHint:'OpenAI model id — e.g. gpt-4o-mini, gpt-4o' },
+};
+
+function onAiProviderChange(){
+  const p = document.getElementById('ai-provider').value;
+  const d = AI_DEFAULTS[p];
+  document.getElementById('ai-key-hint').textContent   = d.keyHint;
+  document.getElementById('ai-model-hint').textContent = d.modelHint;
+  // Only pre-fill model if empty (don't overwrite a saved custom model)
+  if(!document.getElementById('ai-model').value.trim()){
+    document.getElementById('ai-model').value = d.model;
+  }
+}
+
+function loadAIForm(){
+  const ai = DB.get('ai') || {};
+  document.getElementById('ai-provider').value = ai.provider || 'openrouter';
+  document.getElementById('ai-key').value       = ai.key || '';
+  document.getElementById('ai-model').value     = ai.model || AI_DEFAULTS[ai.provider||'openrouter'].model;
+  document.getElementById('ai-lang').value      = ai.lang || 'hinglish';
+  onAiProviderChange();
+  if(ai.model) document.getElementById('ai-model').value = ai.model; // keep saved model after defaults applied
+}
+
 function saveAI(){
-  DB.set('ai',{lang:document.getElementById('ai-lang').value});
+  const provider = document.getElementById('ai-provider').value;
+  const key      = document.getElementById('ai-key').value.trim();
+  const model    = document.getElementById('ai-model').value.trim() || AI_DEFAULTS[provider].model;
+  const lang     = document.getElementById('ai-lang').value;
+  DB.set('ai',{provider, key, model, lang});
   toast('AI settings saved ✓');
   nav('s-settings');
+}
+
+// ── Test connection with a tiny ping message ─────────────────
+async function testAiConnection(){
+  const provider = document.getElementById('ai-provider').value;
+  const key      = document.getElementById('ai-key').value.trim();
+  const model    = document.getElementById('ai-model').value.trim() || AI_DEFAULTS[provider].model;
+  if(!key){ toast('Enter an API key first'); return; }
+  toast('Testing connection to '+provider+'…');
+  try{
+    const reply = await callAI(provider, key, model, [{role:'user', content:'Reply with exactly: OK'}]);
+    toast(reply ? '✓ Connected — model replied: '+reply.slice(0,40) : '✗ No reply received');
+  }catch(err){
+    toast('✗ Connection failed: '+err.message);
+  }
+}
+
+// ── Core: call the chosen AI provider ─────────────────────────
+async function callAI(provider, key, model, messages){
+  const cfg = AI_DEFAULTS[provider];
+
+  if(provider==='anthropic'){
+    const res = await fetch(cfg.url, {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'x-api-key': key,
+        'anthropic-version':'2023-06-01',
+        'anthropic-dangerous-direct-browser-access':'true',
+      },
+      body: JSON.stringify({
+        model: model,
+        max_tokens: 1024,
+        messages: messages.filter(m=>m.role!=='system'),
+        system: messages.find(m=>m.role==='system')?.content || undefined,
+      }),
+    });
+    if(!res.ok) throw new Error('HTTP '+res.status+' — '+(await res.text()).slice(0,200));
+    const data = await res.json();
+    return (data.content||[]).map(c=>c.text||'').join('');
+  }
+
+  // OpenRouter & OpenAI both use OpenAI-compatible chat/completions format
+  const res = await fetch(cfg.url, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+key,
+      ...(provider==='openrouter' ? {
+        'HTTP-Referer':'https://polypack.local',
+        'X-Title':'PolyPack',
+      } : {}),
+    },
+    body: JSON.stringify({ model, messages, max_tokens:1024 }),
+  });
+  if(!res.ok) throw new Error('HTTP '+res.status+' — '+(await res.text()).slice(0,200));
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || '';
+}
+
+// ── Build a factory-data context for the AI ───────────────────
+function buildAiContext(){
+  const stock   = DB.getArr('stock');
+  const orders  = DB.getArr('orders');
+  const t       = DB.get('today_stats')||{extruded:0,bags:0};
+  const machines= DB.getArr('machines');
+  return `Today's production: ${t.extruded} kg extruded, ${t.bags} bags cut.
+Active machines: ${machines.filter(m=>m.status==='Active').map(m=>m.name).join(', ')}.
+Current stock: ${stock.map(s=>s.material+': '+s.current+' kg (min '+s.min+' kg)').join('; ')}.
+Pending orders: ${orders.map(o=>o.client+' — '+o.material+' '+o.thickness+'µ, '+o.quantity+' '+o.unit+', due '+o.due_date+', status '+o.status).join('; ')}.
+Financial year: ${getCurrentFY()} (01 Apr – 31 Mar).`;
+}
+
+// ── Chat UI ─────────────────────────────────────────────────────
+let aiChatHistory = [];
+
+function clearAiChat(){
+  aiChatHistory = [];
+  document.getElementById('ai-chat-msgs').innerHTML =
+    '<div class="empty"><div class="empty-icon">🤖</div><div class="empty-msg">Ask about stock, orders, production — e.g. "HDPE stock kitna hai?" or "Pending orders dikhao"</div></div>';
+}
+
+function appendAiMsg(role, text){
+  const el = document.getElementById('ai-chat-msgs');
+  if(el.querySelector('.empty')) el.innerHTML='';
+  const bubble = document.createElement('div');
+  bubble.style.margin   = '0 0 10px';
+  bubble.style.maxWidth = '85%';
+  bubble.style.padding  = '10px 13px';
+  bubble.style.borderRadius = '12px';
+  bubble.style.fontSize = '13px';
+  bubble.style.lineHeight='1.5';
+  bubble.style.whiteSpace='pre-wrap';
+  if(role==='user'){
+    bubble.style.marginLeft='auto';
+    bubble.style.background='var(--navy)';
+    bubble.style.color='#fff';
+  } else {
+    bubble.style.background='#fff';
+    bubble.style.border='1px solid var(--border)';
+    bubble.style.color='var(--text)';
+  }
+  bubble.textContent = text;
+  el.appendChild(bubble);
+  el.scrollTop = el.scrollHeight;
+  return bubble;
+}
+
+async function sendAiChat(){
+  const input = document.getElementById('ai-chat-input');
+  const text  = input.value.trim();
+  if(!text) return;
+  const ai = DB.get('ai')||{};
+  if(!ai.key){ toast('Set up AI provider & key in Settings → AI assistant first'); nav('s-ai'); return; }
+
+  appendAiMsg('user', text);
+  input.value='';
+  const thinking = appendAiMsg('ai', '…');
+
+  const langInstruction = ai.lang==='hindi' ? 'Reply in Hindi.' : ai.lang==='english' ? 'Reply in English.' : 'Reply in Hinglish (mix of Hindi and English), like how factory staff talk.';
+  const systemMsg = `You are PolyPack's factory assistant for a polythene sheet/bag manufacturing company. ${langInstruction} Be concise and practical. Here is the current factory data:\n${buildAiContext()}`;
+
+  aiChatHistory.push({role:'user', content:text});
+  const messages = [{role:'system', content:systemMsg}, ...aiChatHistory.slice(-8)];
+
+  try{
+    const reply = await callAI(ai.provider||'openrouter', ai.key, ai.model||AI_DEFAULTS[ai.provider||'openrouter'].model, messages);
+    thinking.textContent = reply || '(empty response)';
+    aiChatHistory.push({role:'assistant', content:reply});
+  }catch(err){
+    thinking.textContent = '⚠ Error: '+err.message;
+    thinking.style.color = '#991b1b';
+  }
 }
 
 function toggleEye(id){
