@@ -837,12 +837,12 @@ async function seedDemoData(force){
       sha256('6666'+'polypack_salt'),
     ]);
     DB.set('employees',[
-      {id:'e1',name:'Gyanshyam Yadav', role:'Manager',      gender:'Male',  phone:'9876543210',pinHash:h1,machine:''},
-      {id:'e2',name:'Bhaskar',    role:'Extrusion Operator',  gender:'Male',  phone:'9876500001',pinHash:h2,machine:'Extruder 1'},
-      {id:'e3',name:'Mohan Patel',    role:'Extrusion Operator',  gender:'Male',  phone:'9876500002',pinHash:h3,machine:'Extruder 2'},
-      {id:'e4',name:'Meera Bai',      role:'Cutting Operator',    gender:'Female',phone:'9876500003',pinHash:h4,machine:'Cutting M/C 1'},
-      {id:'e5',name:'Mukesh Kumar',      role:'Gatekeeper',          gender:'Male',  phone:'9876500004',pinHash:h5,machine:''},
-      {id:'e6',name:'Narendra Khandelwal',     role:'Accountant',          gender:'Female',phone:'9876500005',pinHash:h6,machine:''},
+      {id:'e1',name:'Rajesh Sharma',   role:'Manager',             gender:'Male',  phone:'9876543210',pinHash:h1,machine:''},
+      {id:'e2',name:'Ramesh Kumar',    role:'Extrusion Operator',  gender:'Male',  phone:'9876500001',pinHash:h2,machine:'Extruder 1'},
+      {id:'e3',name:'Suresh Patel',    role:'Extrusion Operator',  gender:'Male',  phone:'9876500002',pinHash:h3,machine:'Extruder 2'},
+      {id:'e4',name:'Meena Devi',      role:'Cutting Operator',    gender:'Female',phone:'9876500003',pinHash:h4,machine:'Cutting M/C 1'},
+      {id:'e5',name:'Raju Singh',      role:'Gatekeeper',          gender:'Male',  phone:'9876500004',pinHash:h5,machine:''},
+      {id:'e6',name:'Priya Joshi',     role:'Accountant',          gender:'Female',phone:'9876500005',pinHash:h6,machine:''},
     ]);
     DB.set('machines',[
       {id:'m1',name:'Extruder 1',type:'Extruder',capacity:400,status:'Active',remarks:'HDPE/PP grade'},
@@ -1809,7 +1809,9 @@ function autoMapTallyItem(){
     hint.textContent = '✓ Auto-mapped: "'+exact.tallyName+'" → '+exact.material;
     hint.style.color = '#16a34a';
   } else {
-    hint.innerHTML = '⚠ Not mapped yet — select material manually below, or <a style="color:var(--blue);font-weight:600;cursor:pointer" onclick="quickAddTmap(\\''+typed.replace(/'/g,"\\\\'")+'\\')">add this mapping</a> for next time';
+    // Build the link safely without escape nightmares
+    const safeTyped = typed.replace(/'/g, "\\'");
+    hint.innerHTML = '⚠ Not mapped yet — select material manually below, or <a style="color:var(--blue);font-weight:600;cursor:pointer" onclick="quickAddTmap(\'' + safeTyped + '\')">add this mapping</a> for next time';
     hint.style.color = '#d97706';
   }
 }
