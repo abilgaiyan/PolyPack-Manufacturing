@@ -2462,38 +2462,144 @@ function onAiProviderChange(){
   }
 }
 
-function loadAIForm(){
+// Replace the existing loadAIForm function
+async function loadAIForm() {
+  // First try to load from Google Sheets if enabled
+  if (googleSheetsEnabled && API && API.getAISettings) {
+    try {
+      const result = await API.getAISettings();
+      if (result && result.ok && result.data) {
+        const settings = result.data;
+        document.getElementById('ai-provider').value = settings.provider || 'openrouter';
+        document.getElementById('ai-model').value = settings.model || AI_DEFAULTS[settings.provider || 'openrouter'].model;
+        document.getElementById('ai-lang').value = settings.language || 'hinglish';
+        
+        // Show masked key hint
+        const keyHint = document.getElementById('ai-key-hint');
+        if (settings.api_key) {
+          const masked = maskApiKey(settings.api_key);
+          keyHint.innerHTML = `✓ Key configured: ${masked}`;
+          keyHint.style.color = '#16a34a';
+        } else {
+          keyHint.innerHTML = 'No API key configured. Enter one below.';
+          keyHint.style.color = '';
+        }
+        
+        // Clear the key field (never pre-fill actual key)
+        document.getElementById('ai-key').value = '';
+        return;
+      }
+    } catch (err) {
+      console.error("Failed to load AI settings from Google Sheets:", err);
+    }
+  }
+  
+  // Fallback to localStorage
   const ai = DB.get('ai') || {};
   document.getElementById('ai-provider').value = ai.provider || 'openrouter';
-  document.getElementById('ai-key').value       = ai.key || '';
-  document.getElementById('ai-model').value     = ai.model || AI_DEFAULTS[ai.provider||'openrouter'].model;
-  document.getElementById('ai-lang').value      = ai.lang || 'hinglish';
+  document.getElementById('ai-key').value = ai.key || '';
+  document.getElementById('ai-model').value = ai.model || AI_DEFAULTS[ai.provider || 'openrouter'].model;
+  document.getElementById('ai-lang').value = ai.lang || 'hinglish';
+  
+  if (ai.key) {
+    const keyHint = document.getElementById('ai-key-hint');
+    keyHint.innerHTML = `⚠️ Key stored in browser (insecure). Configure Google Sheets for secure storage.`;
+    keyHint.style.color = '#d97706';
+  }
+  
   onAiProviderChange();
-  if(ai.model) document.getElementById('ai-model').value = ai.model; // keep saved model after defaults applied
+  if (ai.model) document.getElementById('ai-model').value = ai.model;
 }
 
-function saveAI(){
+// Replace the existing saveAI function (around line 3100)
+async function saveAI() {
   const provider = document.getElementById('ai-provider').value;
-  const key      = document.getElementById('ai-key').value.trim();
-  const model    = document.getElementById('ai-model').value.trim() || AI_DEFAULTS[provider].model;
-  const lang     = document.getElementById('ai-lang').value;
-  DB.set('ai',{provider, key, model, lang});
-  toast('AI settings saved ✓');
+  const key = document.getElementById('ai-key').value.trim();
+  const model = document.getElementById('ai-model').value.trim() || AI_DEFAULTS[provider].model;
+  const lang = document.getElementById('ai-lang').value;
+  
+  if (!key) {
+    toast('Please enter your API key');
+    return;
+  }
+  
+  // Store securely in Google Sheets if enabled
+  if (googleSheetsEnabled && API && API.saveAISettings) {
+    try {
+      const result = await API.saveAISettings(provider, key, model, lang);
+      if (result && result.ok) {
+        // Store only non-sensitive info in localStorage
+        DB.set('ai', {
+          provider: provider,
+          has_key: true,
+          key_masked: maskApiKey(key),
+          model: model,
+          lang: lang
+        });
+        toast('AI settings saved securely to Google Sheets ✓');
+        // Clear the key field for security
+        document.getElementById('ai-key').value = '';
+      } else {
+        toast('Failed to save to Google Sheets: ' + (result?.error || 'Unknown error'));
+      }
+    } catch (err) {
+      console.error("Save to Google Sheets failed:", err);
+      toast('Failed to save to Google Sheets. Check connection.');
+    }
+  } else {
+    // Fallback to localStorage (insecure, but works for demo without Sheets)
+    DB.set('ai', { provider, key, model, lang });
+    toast('AI settings saved (local only - configure Google Sheets for secure storage)');
+  }
+  
   nav('s-settings');
 }
 
-// ── Test connection with a tiny ping message ─────────────────
-async function testAiConnection(){
+// Helper function to mask API key for display
+function maskApiKey(key) {
+  if (!key || key.length < 8) return '••••••••';
+  const first4 = key.slice(0, 4);
+  const last4 = key.slice(-4);
+  return first4 + '••••••••' + last4;
+}
+
+// Replace the existing testAiConnection function
+async function testAiConnection() {
   const provider = document.getElementById('ai-provider').value;
-  const key      = document.getElementById('ai-key').value.trim();
-  const model    = document.getElementById('ai-model').value.trim() || AI_DEFAULTS[provider].model;
-  if(!key){ toast('Enter an API key first'); return; }
-  toast('Testing connection to '+provider+'…');
-  try{
-    const reply = await callAI(provider, key, model, [{role:'user', content:'Reply with exactly: OK'}]);
-    toast(reply ? '✓ Connected — model replied: '+reply.slice(0,40) : '✗ No reply received');
-  }catch(err){
-    toast('✗ Connection failed: '+err.message);
+  const key = document.getElementById('ai-key').value.trim();
+  const model = document.getElementById('ai-model').value.trim() || AI_DEFAULTS[provider].model;
+  
+  let apiKey = key;
+  
+  // If no key entered, try to get from Google Sheets
+  if (!apiKey && googleSheetsEnabled && API && API.getAISettings) {
+    try {
+      const result = await API.getAISettings();
+      if (result && result.ok && result.data && result.data.api_key) {
+        apiKey = result.data.api_key;
+      }
+    } catch (err) {
+      console.error("Failed to get API key from Google Sheets:", err);
+    }
+  }
+  
+  // Fallback to localStorage
+  if (!apiKey) {
+    const ai = DB.get('ai');
+    apiKey = ai ? ai.key : null;
+  }
+  
+  if (!apiKey) {
+    toast('Enter an API key first');
+    return;
+  }
+  
+  toast('Testing connection to ' + provider + '…');
+  try {
+    const reply = await callAI(provider, apiKey, model, [{ role: 'user', content: 'Reply with exactly: OK' }]);
+    toast(reply ? '✓ Connected — model replied: ' + reply.slice(0, 40) : '✗ No reply received');
+  } catch (err) {
+    toast('✗ Connection failed: ' + err.message);
   }
 }
 
@@ -2588,29 +2694,64 @@ function appendAiMsg(role, text){
   return bubble;
 }
 
-async function sendAiChat(){
+// Replace the existing sendAiChat function
+async function sendAiChat() {
   const input = document.getElementById('ai-chat-input');
-  const text  = input.value.trim();
-  if(!text) return;
-  const ai = DB.get('ai')||{};
-  if(!ai.key){ toast('Set up AI provider & key in Settings → AI assistant first'); nav('s-ai'); return; }
-
+  const text = input.value.trim();
+  if (!text) return;
+  
+  let provider, model, apiKey;
+  
+  // Try to get from Google Sheets first
+  if (googleSheetsEnabled && API && API.getAISettings) {
+    try {
+      const result = await API.getAISettings();
+      if (result && result.ok && result.data) {
+        provider = result.data.provider || 'openrouter';
+        model = result.data.model || AI_DEFAULTS[provider].model;
+        apiKey = result.data.api_key;
+      }
+    } catch (err) {
+      console.error("Failed to get AI settings from Google Sheets:", err);
+    }
+  }
+  
+  // Fallback to localStorage
+  if (!apiKey) {
+    const ai = DB.get('ai') || {};
+    provider = ai.provider || 'openrouter';
+    model = ai.model || AI_DEFAULTS[provider].model;
+    apiKey = ai.key;
+  }
+  
+  if (!apiKey) {
+    toast('Set up AI provider & key in Settings → AI assistant first');
+    nav('s-ai');
+    return;
+  }
+  
   appendAiMsg('user', text);
-  input.value='';
+  input.value = '';
   const thinking = appendAiMsg('ai', '…');
-
-  const langInstruction = ai.lang==='hindi' ? 'Reply in Hindi.' : ai.lang==='english' ? 'Reply in English.' : 'Reply in Hinglish (mix of Hindi and English), like how factory staff talk.';
+  
+  const langSetting = googleSheetsEnabled ? 
+    (await API.getAISettings())?.data?.language || 'hinglish' :
+    (DB.get('ai') || {}).lang || 'hinglish';
+  
+  const langInstruction = langSetting === 'hindi' ? 'Reply in Hindi.' : 
+                          langSetting === 'english' ? 'Reply in English.' : 
+                          'Reply in Hinglish (mix of Hindi and English), like how factory staff talk.';
   const systemMsg = `You are PolyPack's factory assistant for a polythene sheet/bag manufacturing company. ${langInstruction} Be concise and practical. Here is the current factory data:\n${buildAiContext()}`;
-
-  aiChatHistory.push({role:'user', content:text});
-  const messages = [{role:'system', content:systemMsg}, ...aiChatHistory.slice(-8)];
-
-  try{
-    const reply = await callAI(ai.provider||'openrouter', ai.key, ai.model||AI_DEFAULTS[ai.provider||'openrouter'].model, messages);
+  
+  aiChatHistory.push({ role: 'user', content: text });
+  const messages = [{ role: 'system', content: systemMsg }, ...aiChatHistory.slice(-8)];
+  
+  try {
+    const reply = await callAI(provider, apiKey, model, messages);
     thinking.textContent = reply || '(empty response)';
-    aiChatHistory.push({role:'assistant', content:reply});
-  }catch(err){
-    thinking.textContent = '⚠ Error: '+err.message;
+    aiChatHistory.push({ role: 'assistant', content: reply });
+  } catch (err) {
+    thinking.textContent = '⚠ Error: ' + err.message;
     thinking.style.color = '#991b1b';
   }
 }

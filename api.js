@@ -125,6 +125,63 @@ const API = (() => {
 
   };
 
+  // ============================================================
+  //  SECURE AI SETTINGS - Store in Google Sheets only
+  //  Never store API keys in localStorage
+  // ============================================================
+
+  // In api.js - Add these methods
+  async function saveAISettings(provider, apiKey, model, language) {
+    return post("save_ai_settings", {
+      provider: provider,
+      api_key: apiKey,  // This goes to Google Sheets, NOT localStorage
+      model: model,
+      language: language,
+      updated_by: currentUser?.name || "System",
+      updated_at: new Date().toISOString()
+    });
+  }
+
+  async function getAISettings() {
+    return get("get_ai_settings");
+  }
+
+  // Add to your Apps Script (Code.gs):
+  function saveAISettings(data) {
+    const sheet = getSheet("AI_Settings");
+    // Find or create row for each setting
+    const keys = ["provider", "api_key", "model", "language", "updated_by", "updated_at"];
+    for (const [key, value] of Object.entries(data)) {
+      if (keys.includes(key)) {
+        // Update or insert
+        updateSetting(sheet, key, value);
+      }
+    }
+    return { ok: true, message: "AI settings saved securely" };
+  }
+
+  function getAISettings() {
+    const sheet = getSheet("AI_Settings");
+    const data = sheet.getDataRange().getValues();
+    const settings = {};
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0]) settings[data[i][0]] = data[i][1];
+    }
+    return { ok: true, data: settings };
+  }
+
+  function updateSetting(sheet, key, value) {
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === key) {
+        sheet.getRange(i + 1, 2).setValue(value);
+        sheet.getRange(i + 1, 3).setValue(new Date());
+        return;
+      }
+    }
+    sheet.appendRow([key, value, new Date()]);
+  }
+
 })();
 
 // ============================================================
