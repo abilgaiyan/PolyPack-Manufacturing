@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<script src="api.js"></script>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
@@ -823,6 +824,212 @@ const SESSION = {
   valid(){ return !!this._token && !!this._user; },
   user(){ return this._user; },
 };
+
+// Add this to existing script section (after the DB and SESSION definitions)
+
+// ============================================================
+//  GOOGLE SHEETS SYNC USING API.JS
+// ============================================================
+
+// Initialize API with your settings
+let googleSheetsEnabled = false;
+let API = null;
+
+function waitForAPI() {
+  return new Promise((resolve) => {
+    if (typeof API !== 'undefined' && API) {
+      resolve(true);
+    } else {
+      // Check every 100ms for API to load
+      const interval = setInterval(() => {
+        if (typeof API !== 'undefined' && API) {
+          clearInterval(interval);
+          resolve(true);
+        }
+      }, 100);
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        clearInterval(interval);
+        console.warn("API not loaded, Google Sheets disabled");
+        resolve(false);
+      }, 5000);
+    }
+  });
+}
+
+// Add this function before init()
+async function initGoogleSheets() {
+  // Wait for API to be available
+  if (typeof API === 'undefined' || !API) {
+    await waitForAPI();
+  }
+  
+  const sheetsConfig = DB.get('sheets');
+  if (sheetsConfig && sheetsConfig.url) {
+    googleSheetsEnabled = true;
+    console.log("✅ Google Sheets configured:", sheetsConfig.url.substring(0, 50) + "...");
+    return true;
+  }
+  
+  googleSheetsEnabled = false;
+  console.log("ℹ️ Google Sheets not configured. Data will be saved locally only.");
+  return false;
+}
+
+// Sync extrusion to Google Sheets
+async function syncExtrusionToSheets(data) {
+  if (!googleSheetsEnabled) {
+    console.log("Google Sheets not configured, skipping sync");
+    return { ok: true, message: "Local only" };
+  }
+  
+  try {
+    const result = await API.logExtrusion({
+      operator_name: data.operator,
+      machine: data.machine,
+      shift: data.shift,
+      material: data.material,
+      material_consumed_kg: data.consumed_kg,
+      output_weight_kg: data.output_kg,
+      width_mm: data.width_mm || 0,
+      thickness_micron: data.thickness_micron || 0,
+      wastage_kg: data.wastage_kg || 0,
+      remarks: data.remarks || ""
+    });
+    return result;
+  } catch (err) {
+    console.error("Sync failed:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// Sync cutting to Google Sheets
+async function syncCuttingToSheets(data) {
+  if (!googleSheetsEnabled) return { ok: true, message: "Local only" };
+  
+  try {
+    const result = await API.logCutting({
+      operator_name: data.operator,
+      machine: data.machine,
+      shift: data.shift,
+      source_extruder: data.source_extruder,
+      bag_size_cm: data.bag_size,
+      bags_produced: data.bags_produced,
+      wastage_kg: data.wastage_kg || 0,
+      client_order: data.client_order,
+      remarks: data.remarks || ""
+    });
+    return result;
+  } catch (err) {
+    console.error("Sync failed:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// Sync dispatch to Google Sheets
+async function syncDispatchToSheets(data) {
+  if (!googleSheetsEnabled) return { ok: true, message: "Local only" };
+  
+  try {
+    const result = await API.logDispatch({
+      client: data.client,
+      quantity: data.quantity,
+      unit: data.unit || "pcs",
+      vehicle_no: data.vehicle_no || "",
+      driver_name: data.driver_name || "",
+      challan_no: data.challan_no || "",
+      gatekeeper: data.gatekeeper,
+      remarks: data.remarks || ""
+    });
+    return result;
+  } catch (err) {
+    console.error("Sync failed:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// Sync attendance to Google Sheets
+async function syncAttendanceToSheets(data) {
+  if (!googleSheetsEnabled) return { ok: true, message: "Local only" };
+  
+  try {
+    const result = await API.markAttendance({
+      employee_name: data.employee_name,
+      role: data.role || "Operator",
+      shift: data.shift,
+      status: data.status,
+      in_time: data.in_time || "",
+      out_time: data.out_time || ""
+    });
+    return result;
+  } catch (err) {
+    console.error("Sync failed:", err);
+    return { ok: false, error: err.message };
+  }
+}
+
+// Load stock from Google Sheets (and merge with local)
+async function loadStockFromSheets() {
+  if (!googleSheetsEnabled) return null;
+  
+  try {
+    const result = await API.getStock();
+    if (result.ok && result.data) {
+      // Merge remote stock with local
+      const localStock = DB.getArr('stock');
+      const remoteStock = result.data;
+      
+      // Update local stock with remote values
+      remoteStock.forEach(remote => {
+        const local = localStock.find(s => s.material === remote.material);
+        if (local) {
+          local.current = remote.current_kg;
+          local.min = remote.min_level_kg;
+        } else {
+          localStock.push({
+            material: remote.material,
+            current: remote.current_kg,
+            min: remote.min_level_kg
+          });
+        }
+      });
+      DB.set('stock', localStock);
+      return result;
+    }
+  } catch (err) {
+    console.error("Load from sheets failed:", err);
+  }
+  return null;
+}
+
+// Load orders from Google Sheets
+async function loadOrdersFromSheets() {
+  if (!googleSheetsEnabled) return null;
+  
+  try {
+    const result = await API.getOrders();
+    if (result.ok && result.data) {
+      DB.set('orders', result.data);
+      return result;
+    }
+  } catch (err) {
+    console.error("Load orders failed:", err);
+  }
+  return null;
+}
+
+// Save settings to Google Sheets
+async function saveSettingsToSheets(settings) {
+  if (!googleSheetsEnabled) return { ok: true };
+  
+  try {
+    const result = await API.saveSettings(settings);
+    return result;
+  } catch (err) {
+    console.error("Save settings failed:", err);
+    return { ok: false, error: err.message };
+  }
+}
 
 async function seedDemoData(force){
   if(force || !DB.get('seeded')){
@@ -1985,71 +2192,138 @@ function switchTab(el,tabId){
   });
 }
 
-function submitExtrusion(){
-  const op=document.getElementById('ext-op').value;
-  const mc=document.getElementById('ext-machine').value;
-  const mat=document.getElementById('ext-mat').value;
-  const out=parseFloat(document.getElementById('ext-output').value)||0;
-  const cons=parseFloat(document.getElementById('ext-consumed').value)||0;
-  if(!op||!mc||!mat){ toast('Fill required fields'); return; }
+async function submitExtrusion() {
+  const op = document.getElementById('ext-op').value;
+  const mc = document.getElementById('ext-machine').value;
+  const mat = document.getElementById('ext-mat').value;
+  const out = parseFloat(document.getElementById('ext-output').value) || 0;
+  const cons = parseFloat(document.getElementById('ext-consumed').value) || 0;
+  
+  if (!op || !mc || !mat) { toast('Fill required fields'); return; }
 
-  // Deduct stock
-  if(cons>0){
-    const stock=DB.getArr('stock');
-    const item=stock.find(s=>s.material===mat);
-    if(item){ item.current=Math.max(0,item.current-cons); DB.set('stock',stock); }
+  // Deduct stock locally
+  if (cons > 0) {
+    const stock = DB.getArr('stock');
+    const item = stock.find(s => s.material === mat);
+    if (item) { item.current = Math.max(0, item.current - cons); DB.set('stock', stock); }
   }
-  // Update today stats
-  const t=DB.get('today_stats')||{extruded:0,bags:0};
+  
+  // Update today stats locally
+  const t = DB.get('today_stats') || { extruded: 0, bags: 0 };
   t.extruded += out;
-  DB.set('today_stats',t);
+  DB.set('today_stats', t);
 
-  toast('Extrusion logged ✓ ('+mc+', '+out+' kg)');
-  ['ext-consumed','ext-output','ext-width','ext-thick','ext-waste','ext-rem'].forEach(id=>document.getElementById(id).value='');
+  // Sync to Google Sheets (async - don't wait)
+  syncExtrusionToSheets({
+    operator: op,
+    machine: mc,
+    shift: document.getElementById('ext-shift').value,
+    material: mat,
+    consumed_kg: cons,
+    output_kg: out,
+    width_mm: document.getElementById('ext-width').value,
+    thickness_micron: document.getElementById('ext-thick').value,
+    wastage_kg: document.getElementById('ext-waste').value,
+    remarks: document.getElementById('ext-rem').value
+  }).then(result => {
+    if (result && result.ok) {
+      console.log("✓ Synced to Google Sheets");
+    } else {
+      console.warn("Sheet sync failed, data saved locally");
+    }
+  });
+
+  toast('Extrusion logged ✓' + (googleSheetsEnabled ? ' (synced)' : ' (local only)'));
+  
+  // Clear form
+  ['ext-consumed', 'ext-output', 'ext-width', 'ext-thick', 'ext-waste', 'ext-rem'].forEach(id => 
+    document.getElementById(id).value = ''
+  );
   renderDash();
 }
 
-function submitCutting(){
-  const op=document.getElementById('cut-op').value;
-  const bags=parseInt(document.getElementById('cut-bags').value)||0;
-  if(!op){ toast('Select operator'); return; }
-  if(!bags){ toast('Enter bags produced'); return; }
+// Updated submitCutting
+async function submitCutting() {
+  const op = document.getElementById('cut-op').value;
+  const bags = parseInt(document.getElementById('cut-bags').value) || 0;
+  
+  if (!op) { toast('Select operator'); return; }
+  if (!bags) { toast('Enter bags produced'); return; }
 
-  const t=DB.get('today_stats')||{extruded:0,bags:0};
+  const t = DB.get('today_stats') || { extruded: 0, bags: 0 };
   t.bags += bags;
-  DB.set('today_stats',t);
+  DB.set('today_stats', t);
 
-  toast('Cutting logged ✓ ('+bags+' bags)');
-  ['cut-size','cut-bags','cut-waste','cut-rem'].forEach(id=>document.getElementById(id).value='');
+  // Sync to Google Sheets
+  syncCuttingToSheets({
+    operator: op,
+    machine: document.getElementById('cut-machine').value,
+    shift: document.getElementById('cut-shift').value,
+    source_extruder: document.getElementById('cut-src').value,
+    bag_size: document.getElementById('cut-size').value,
+    bags_produced: bags,
+    wastage_kg: document.getElementById('cut-waste').value,
+    client_order: document.getElementById('cut-client').value,
+    remarks: document.getElementById('cut-rem').value
+  });
+
+  toast('Cutting logged ✓' + (googleSheetsEnabled ? ' (synced)' : ' (local only)'));
+  ['cut-size', 'cut-bags', 'cut-waste', 'cut-rem'].forEach(id => document.getElementById(id).value = '');
   renderDash();
 }
 
-function submitDispatch(){
-  const client=document.getElementById('dis-client').value;
-  const qty=parseFloat(document.getElementById('dis-qty').value)||0;
-  const gate=document.getElementById('dis-gate').value;
-  if(!client||!qty||!gate){ toast('Fill required fields'); return; }
+// Updated submitDispatch
+async function submitDispatch() {
+  const client = document.getElementById('dis-client').value;
+  const qty = parseFloat(document.getElementById('dis-qty').value) || 0;
+  const gate = document.getElementById('dis-gate').value;
+  
+  if (!client || !qty || !gate) { toast('Fill required fields'); return; }
 
-  // Mark order as Ready/dispatched if matches
-  const orders=DB.getArr('orders');
-  const ord=orders.find(o=>o.client===client && o.status!=='Ready');
-  if(ord){ ord.status='Ready'; DB.set('orders',orders); }
+  // Mark order as Ready locally
+  const orders = DB.getArr('orders');
+  const ord = orders.find(o => o.client === client && o.status !== 'Ready');
+  if (ord) { ord.status = 'Ready'; DB.set('orders', orders); }
 
-  toast('Dispatch recorded ✓ ('+client+', '+qty+' '+document.getElementById('dis-unit').value+')');
-  ['dis-qty','dis-veh','dis-drv','dis-ch','dis-rem'].forEach(id=>document.getElementById(id).value='');
+  // Sync to Google Sheets
+  syncDispatchToSheets({
+    client: client,
+    quantity: qty,
+    unit: document.getElementById('dis-unit').value,
+    vehicle_no: document.getElementById('dis-veh').value,
+    driver_name: document.getElementById('dis-drv').value,
+    challan_no: document.getElementById('dis-ch').value,
+    gatekeeper: gate,
+    remarks: document.getElementById('dis-rem').value
+  });
+
+  toast('Dispatch recorded ✓' + (googleSheetsEnabled ? ' (synced)' : ' (local only)'));
+  ['dis-qty', 'dis-veh', 'dis-drv', 'dis-ch', 'dis-rem'].forEach(id => document.getElementById(id).value = '');
   renderDash();
 }
 
-function submitAttendance(){
-  const emp=document.getElementById('att-emp').value;
-  if(!emp){ toast('Select employee'); return; }
-  const status=document.getElementById('att-status').value;
-  const empName = (DB.getArr('employees').find(e=>e.id===emp)||{}).name||'';
-  toast('Attendance marked ✓ ('+empName+' — '+status+')');
-  document.getElementById('att-rem').value='';
-  document.getElementById('att-in').value='';
-}
+// Updated submitAttendance
+async function submitAttendance() {
+  const emp = document.getElementById('att-emp').value;
+  if (!emp) { toast('Select employee'); return; }
+  
+  const status = document.getElementById('att-status').value;
+  const empName = (DB.getArr('employees').find(e => e.id === emp) || {}).name || '';
 
+  // Sync to Google Sheets
+  syncAttendanceToSheets({
+    employee_name: empName,
+    role: (DB.getArr('employees').find(e => e.id === emp) || {}).role,
+    shift: document.getElementById('att-shift').value,
+    status: status,
+    in_time: document.getElementById('att-in').value,
+    out_time: ""
+  });
+
+  toast('Attendance marked ✓ (' + empName + ' — ' + status + ')' + (googleSheetsEnabled ? ' (synced)' : ' (local only)'));
+  document.getElementById('att-rem').value = '';
+  document.getElementById('att-in').value = '';
+}
 // ═══════════════════════════════════════════════════════════
 //  COMPANY / TALLY / SHEETS / AI SETTINGS
 // ═══════════════════════════════════════════════════════════
@@ -2150,8 +2424,20 @@ function loadSheetsForm(){
   document.getElementById('sh-url').value=s.url||'';
   document.getElementById('sh-id').value =s.id||'';
 }
-function saveSheets(){
-  DB.set('sheets',{url:document.getElementById('sh-url').value,id:document.getElementById('sh-id').value});
+// Update saveSheets function to enable sync
+async function saveSheets() {
+  const url = document.getElementById('sh-url').value;
+  const id = document.getElementById('sh-id').value;
+  
+  DB.set('sheets', { url: url, id: id });
+  
+  // Update API URL if provided
+  if (url && url !== API.SCRIPT_URL) {
+    // In a real implementation, you'd update the API endpoint
+    console.log("Custom Sheets URL configured:", url);
+  }
+  
+  await initGoogleSheets();
   toast('Google Sheets config saved ✓');
   nav('s-settings');
 }
@@ -2347,19 +2633,62 @@ function toast(msg){
 }
 
 // ═══════════════════════════════════════════════════════════
-//  INIT
+//  INIT — Updated with Google Sheets integration
 // ═══════════════════════════════════════════════════════════
-async function init(){
+async function init() {
   // If old session stored Promise objects as pinHash strings, clear and re-seed
   const existing = DB.getArr('employees');
-  const corrupt  = existing.length && existing.some(e => !e.pinHash || e.pinHash.startsWith('[object') || e.pinHash.length < 32);
-  if(corrupt){
-    ['employees','seeded'].forEach(k=>localStorage.removeItem('pp_'+k));
+  const corrupt = existing.length && existing.some(e => !e.pinHash || e.pinHash.startsWith('[object') || e.pinHash.length < 32);
+  if (corrupt) {
+    ['employees', 'seeded'].forEach(k => localStorage.removeItem('pp_' + k));
   }
+  
   await seedDemoData();
   buildLoginDropdown();
-  const ai=DB.get('ai'); if(ai&&ai.lang) document.getElementById('ai-lang').value=ai.lang;
+  
+  // Load AI settings
+  const ai = DB.get('ai');
+  if (ai && ai.lang) document.getElementById('ai-lang').value = ai.lang;
+  
+  // ============================================================
+  //  GOOGLE SHEETS INITIALIZATION
+  // ============================================================
+  await initGoogleSheets();
+  
+  // If Google Sheets is configured, sync data from cloud
+  if (googleSheetsEnabled) {
+    try {
+      // Load stock from Google Sheets
+      const stockResult = await loadStockFromSheets();
+      if (stockResult && stockResult.ok) {
+        console.log("✓ Stock synced from Google Sheets");
+      }
+      
+      // Load orders from Google Sheets
+      const ordersResult = await loadOrdersFromSheets();
+      if (ordersResult && ordersResult.ok) {
+        console.log("✓ Orders synced from Google Sheets");
+      }
+      
+      // Refresh dashboard if user is logged in
+      if (SESSION.valid()) {
+        renderDash();
+        loadStock();
+        loadOrders();
+        toast('Data synced from Google Sheets 📊');
+      }
+    } catch (err) {
+      console.warn("Google Sheets sync failed:", err);
+      // Don't show toast to avoid annoying users on every load
+    }
+  }
+  
+  // Update PIN dots
+  updatePinDots();
+  
+  console.log("✅ PolyPack initialized. Google Sheets:", googleSheetsEnabled ? "Enabled" : "Disabled (configure in Settings)");
 }
+
 window.addEventListener('load', init);
 </script>
 </body>

@@ -8,7 +8,7 @@
 const API = (() => {
 
   // ── REPLACE THIS with your deployed Apps Script URL ─────
-  const SCRIPT_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID_HERE/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJlG5RXreim_giRgJa_Hnyz2sPh3QjjI3k1kblaYROVyIqRdD5nIvmQvHZ-gNzKbYvtg/exec";
 
   // ── Generic GET request ──────────────────────────────────
   async function get(action, params = {}) {
