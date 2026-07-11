@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/Orchestration/">
+    <Project Path="src/Orchestration/PolyPack.AppHost/PolyPack.AppHost.csproj" />
+    <Project Path="src/Orchestration/PolyPack.ServiceDefaults/PolyPack.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/PolyPack.Shared.Contracts/PolyPack.Shared.Contracts.csproj" />
+  </Folder>
+</Solution>

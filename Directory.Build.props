@@ -1,0 +1,33 @@
+<Project>
+  <!--
+    Directory.Build.props - Applies to ALL projects in the solution
+  -->
+
+  <PropertyGroup Label="Project Configuration">
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Artifacts / Output Paths">
+    <!-- Centralize all build outputs in root/artifacts folder -->
+    <ArtifactsPath>$(MSBuildThisFileDirectory)artifacts</ArtifactsPath>
+    
+    <!-- This automatically sets bin and obj paths under artifacts -->
+    <BaseOutputPath>$(ArtifactsPath)\bin\$(MSBuildProjectName)\</BaseOutputPath>
+    <BaseIntermediateOutputPath>$(ArtifactsPath)\obj\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    
+    <!-- Optional: Improve incremental build performance -->
+    <DisableFastUpToDateCheck>true</DisableFastUpToDateCheck>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Assembly Info">
+    <Company>PolyPack</Company>
+    <Product>PolyPack-Manufacturing Platform</Product>
+    <Copyright>Copyright © 2026 PolyPack</Copyright>
+  </PropertyGroup>
+
+</Project>
