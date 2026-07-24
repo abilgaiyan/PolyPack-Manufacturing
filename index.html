@@ -783,6 +783,12 @@ tr:last-child td{border-bottom:none}
   <div class="scroll" id="ai-chat-msgs" style="padding:12px">
     <div class="empty"><div class="empty-icon">🤖</div><div class="empty-msg">Ask about stock, orders, production — e.g. "HDPE stock kitna hai?" or "Pending orders dikhao"</div></div>
   </div>
+  <div style="padding:8px 12px;background:var(--bg);display:flex;gap:6px;overflow-x:auto;scrollbar-width:none">
+    <button class="pill active" style="font-size:11px;padding:5px 10px;margin:0" onclick="sendAiPlan()">⚡ AI Production Plan</button>
+    <button class="pill" style="font-size:11px;padding:5px 10px;margin:0" onclick="quickPrompt('HDPE aur PP ka stock level kitna hai?')">📦 Raw Material Stock</button>
+    <button class="pill" style="font-size:11px;padding:5px 10px;margin:0" onclick="quickPrompt('Pending client orders dikhao')">📋 Pending Orders</button>
+    <button class="pill" style="font-size:11px;padding:5px 10px;margin:0" onclick="quickPrompt('Active extruders ki capacity kitni hai?')">🏭 Machine Status</button>
+  </div>
   <div style="padding:10px 12px;border-top:1px solid var(--border);background:var(--card)">
     <div class="frow" style="gap:8px">
       <input class="fi" id="ai-chat-input" type="text" placeholder="Type your question..." style="flex:1" onkeydown="if(event.key==='Enter')sendAiChat()"/>
@@ -2276,27 +2282,41 @@ async function submitDispatch() {
   const client = document.getElementById('dis-client').value;
   const qty = parseFloat(document.getElementById('dis-qty').value) || 0;
   const gate = document.getElementById('dis-gate').value;
+  const challan_no = document.getElementById('dis-ch').value || ('CH/' + new Date().getFullYear() + '/' + Math.floor(100+Math.random()*900));
   
   if (!client || !qty || !gate) { toast('Fill required fields'); return; }
+
+  // Post to backend API
+  if (typeof API !== 'undefined' && API.logDispatch) {
+    const res = await API.logDispatch({
+      client,
+      quantity: qty,
+      unit: document.getElementById('dis-unit').value,
+      vehicle_no: document.getElementById('dis-veh').value,
+      driver_name: document.getElementById('dis-drv').value,
+      challan_no,
+      gatekeeper: gate,
+      remarks: document.getElementById('dis-rem').value
+    });
+
+    if (res && res.ok) {
+      toast('Dispatch logged ✓ Opening Delivery Challan...');
+      setTimeout(() => {
+        const challanId = res.dispatch ? res.dispatch.id : 'dsp_1';
+        window.open('/api/dispatch/' + challanId + '/challan', '_blank');
+      }, 500);
+    } else {
+      toast('Dispatch recorded locally ✓');
+    }
+  } else {
+    toast('Dispatch recorded ✓');
+  }
 
   // Mark order as Ready locally
   const orders = DB.getArr('orders');
   const ord = orders.find(o => o.client === client && o.status !== 'Ready');
   if (ord) { ord.status = 'Ready'; DB.set('orders', orders); }
 
-  // Sync to Google Sheets
-  syncDispatchToSheets({
-    client: client,
-    quantity: qty,
-    unit: document.getElementById('dis-unit').value,
-    vehicle_no: document.getElementById('dis-veh').value,
-    driver_name: document.getElementById('dis-drv').value,
-    challan_no: document.getElementById('dis-ch').value,
-    gatekeeper: gate,
-    remarks: document.getElementById('dis-rem').value
-  });
-
-  toast('Dispatch recorded ✓' + (googleSheetsEnabled ? ' (synced)' : ' (local only)'));
   ['dis-qty', 'dis-veh', 'dis-drv', 'dis-ch', 'dis-rem'].forEach(id => document.getElementById(id).value = '');
   renderDash();
 }
@@ -2693,59 +2713,69 @@ function appendAiMsg(role, text){
   return bubble;
 }
 
-// Replace the existing sendAiChat function
+function quickPrompt(text) {
+  document.getElementById('ai-chat-input').value = text;
+  sendAiChat();
+}
+
+async function sendAiPlan() {
+  appendAiMsg('user', '⚡ Generate AI Production Schedule & Material Requirement Plan');
+  const thinking = appendAiMsg('ai', 'Analyzing pending Tally orders, raw material stock levels, and active machine capacities...');
+  
+  try {
+    const res = await API.aiPlan();
+    if (res && res.ok && res.summary) {
+      thinking.textContent = res.summary;
+      aiChatHistory.push({ role: 'assistant', content: res.summary });
+    } else {
+      thinking.textContent = 'Failed to generate plan. Please ensure pending orders exist.';
+    }
+  } catch (err) {
+    thinking.textContent = 'Error calling AI Plan API: ' + err.message;
+  }
+}
+
 async function sendAiChat() {
   const input = document.getElementById('ai-chat-input');
   const text = input.value.trim();
   if (!text) return;
   
-  let provider, model, apiKey;
-  
-  // Try to get from Google Sheets first
-  if (googleSheetsEnabled && API && API.getAISettings) {
-    try {
-      const result = await API.getAISettings();
-      if (result && result.ok && result.data) {
-        provider = result.data.provider || 'openrouter';
-        model = result.data.model || AI_DEFAULTS[provider].model;
-        apiKey = result.data.api_key;
-      }
-    } catch (err) {
-      console.error("Failed to get AI settings from Google Sheets:", err);
-    }
-  }
-  
-  // Fallback to localStorage
-  if (!apiKey) {
-    const ai = DB.get('ai') || {};
-    provider = ai.provider || 'openrouter';
-    model = ai.model || AI_DEFAULTS[provider].model;
-    apiKey = ai.key;
-  }
-  
-  if (!apiKey) {
-    toast('Set up AI provider & key in Settings → AI assistant first');
-    nav('s-ai');
-    return;
-  }
-  
   appendAiMsg('user', text);
   input.value = '';
   const thinking = appendAiMsg('ai', '…');
   
-  const langSetting = googleSheetsEnabled ? 
-    (await API.getAISettings())?.data?.language || 'hinglish' :
-    (DB.get('ai') || {}).lang || 'hinglish';
-  
-  const langInstruction = langSetting === 'hindi' ? 'Reply in Hindi.' : 
-                          langSetting === 'english' ? 'Reply in English.' : 
-                          'Reply in Hinglish (mix of Hindi and English), like how factory staff talk.';
-  const systemMsg = `You are PolyPack's factory assistant for a polythene sheet/bag manufacturing company. ${langInstruction} Be concise and practical. Here is the current factory data:\n${buildAiContext()}`;
-  
-  aiChatHistory.push({ role: 'user', content: text });
-  const messages = [{ role: 'system', content: systemMsg }, ...aiChatHistory.slice(-8)];
+  const langSetting = (DB.get('ai') || {}).lang || 'hinglish';
   
   try {
+    // Attempt backend API call first
+    if (typeof API !== 'undefined' && API.aiChat) {
+      const res = await API.aiChat(text, langSetting);
+      if (res && res.ok && res.reply) {
+        thinking.textContent = res.reply;
+        aiChatHistory.push({ role: 'assistant', content: res.reply });
+        return;
+      }
+    }
+
+    // Client-side fallback if custom API key configured in UI
+    const ai = DB.get('ai') || {};
+    const provider = ai.provider || 'openrouter';
+    const model = ai.model || AI_DEFAULTS[provider].model;
+    const apiKey = ai.key;
+
+    if (!apiKey) {
+      thinking.textContent = 'Please configure API key in Settings → AI assistant or use server defaults.';
+      return;
+    }
+
+    const langInstruction = langSetting === 'hindi' ? 'Reply in Hindi.' : 
+                            langSetting === 'english' ? 'Reply in English.' : 
+                            'Reply in Hinglish (mix of Hindi and English), like how factory staff talk.';
+    const systemMsg = `You are PolyPack's factory assistant for a polythene sheet/bag manufacturing company. ${langInstruction} Be concise and practical. Here is the current factory data:\n${buildAiContext()}`;
+    
+    aiChatHistory.push({ role: 'user', content: text });
+    const messages = [{ role: 'system', content: systemMsg }, ...aiChatHistory.slice(-8)];
+    
     const reply = await callAI(provider, apiKey, model, messages);
     thinking.textContent = reply || '(empty response)';
     aiChatHistory.push({ role: 'assistant', content: reply });

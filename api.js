@@ -1,233 +1,153 @@
 // ============================================================
-//  PolyPack — Frontend API Client
-//  File: api.js
-//  Include this in your mobile app (HTML/PWA)
-//  Replace SCRIPT_URL with your deployed Apps Script URL
+//  PolyPack — Full-Stack MES & ERP API Client
+//  Connects directly to PolyPack Express Backend (/api)
 // ============================================================
 
 const API = (() => {
 
-  // ── REPLACE THIS with your deployed Apps Script URL ─────
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwJlG5RXreim_giRgJa_Hnyz2sPh3QjjI3k1kblaYROVyIqRdD5nIvmQvHZ-gNzKbYvtg/exec";
-
-  // ── Generic GET request ──────────────────────────────────
-  async function get(action, params = {}) {
-    const qs = new URLSearchParams({ action, ...params }).toString();
+  async function request(url, options = {}) {
     try {
-      const res  = await fetch(`${SCRIPT_URL}?${qs}`);
-      const data = await res.json();
-      return data;
-    } catch (err) {
-      return { ok: false, error: "Network error: " + err.message };
-    }
-  }
-
-  // ── Generic POST request ─────────────────────────────────
-  async function post(action, payload = {}) {
-    try {
-      const res = await fetch(SCRIPT_URL, {
-        method:  "POST",
-        body:    JSON.stringify({ action, data: payload }),
+      const res = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...options.headers },
+        ...options
       });
       const data = await res.json();
       return data;
     } catch (err) {
+      console.warn(`API request to ${url} failed:`, err);
       return { ok: false, error: "Network error: " + err.message };
     }
   }
-
-  // ============================================================
-  //  PUBLIC API METHODS
-  // ============================================================
 
   return {
 
-    // ── Dashboard summary ─────────────────────────────────
+    // ── Auth ────────────────────────────────────────────────
+    login(employee_id, pin) {
+      return request('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ employee_id, pin })
+      });
+    },
+
+    // ── Dashboard ───────────────────────────────────────────
     getDashboard() {
-      return get("get_dashboard");
+      return request('/api/dashboard');
     },
 
-    // ── Stock ──────────────────────────────────────────────
+    // ── Master Data ─────────────────────────────────────────
+    getMasterData() {
+      return request('/api/master/all');
+    },
+
+    addEmployee(data) {
+      return request('/api/master/employees', { method: 'POST', body: JSON.stringify(data) });
+    },
+
+    deleteEmployee(id) {
+      return request(`/api/master/employees/${id}`, { method: 'DELETE' });
+    },
+
+    addMachine(data) {
+      return request('/api/master/machines', { method: 'POST', body: JSON.stringify(data) });
+    },
+
+    deleteMachine(id) {
+      return request(`/api/master/machines/${id}`, { method: 'DELETE' });
+    },
+
+    addMaterial(data) {
+      return request('/api/master/materials', { method: 'POST', body: JSON.stringify(data) });
+    },
+
+    deleteMaterial(id) {
+      return request(`/api/master/materials/${id}`, { method: 'DELETE' });
+    },
+
+    addClient(data) {
+      return request('/api/master/clients', { method: 'POST', body: JSON.stringify(data) });
+    },
+
+    deleteClient(id) {
+      return request(`/api/master/clients/${id}`, { method: 'DELETE' });
+    },
+
+    addTallyMapping(data) {
+      return request('/api/master/tally-mapping', { method: 'POST', body: JSON.stringify(data) });
+    },
+
+    deleteTallyMapping(id) {
+      return request(`/api/master/tally-mapping/${id}`, { method: 'DELETE' });
+    },
+
+    // ── Production Logs ─────────────────────────────────────
+    logExtrusion(payload) {
+      return request('/api/production/extrusion', { method: 'POST', body: JSON.stringify(payload) });
+    },
+
+    logCutting(payload) {
+      return request('/api/production/cutting', { method: 'POST', body: JSON.stringify(payload) });
+    },
+
+    markAttendance(payload) {
+      return request('/api/production/attendance', { method: 'POST', body: JSON.stringify(payload) });
+    },
+
+    logDispatch(payload) {
+      return request('/api/dispatch', { method: 'POST', body: JSON.stringify(payload) });
+    },
+
+    getProductionLogs() {
+      return request('/api/production/logs');
+    },
+
+    // ── Stock & GRN ─────────────────────────────────────────
     getStock() {
-      return get("get_stock");
+      return request('/api/stock');
     },
 
-    updateStock(material, quantity_kg, type = "add", updatedBy = "User") {
-      return post("update_stock", { material, quantity_kg, type, updated_by: updatedBy });
+    logGRN(payload) {
+      return request('/api/stock/grn', { method: 'POST', body: JSON.stringify(payload) });
     },
 
-    // ── Orders ─────────────────────────────────────────────
+    // ── Orders & Tally ──────────────────────────────────────
     getOrders() {
-      return get("get_orders");
+      return request('/api/orders');
     },
 
-    // ── Extrusion log ──────────────────────────────────────
-    logExtrusion({
-      operator_name, machine, shift,
-      material, material_consumed_kg, output_weight_kg,
-      width_mm, thickness_micron, wastage_kg, remarks = ""
-    }) {
-      return post("log_extrusion", {
-        operator_name, machine, shift,
-        material, material_consumed_kg, output_weight_kg,
-        width_mm, thickness_micron, wastage_kg, remarks,
-      });
+    createOrder(payload) {
+      return request('/api/orders', { method: 'POST', body: JSON.stringify(payload) });
     },
 
-    // ── Cutting log ────────────────────────────────────────
-    logCutting({
-      operator_name, machine, shift, source_extruder,
-      bag_size_cm, bags_produced, wastage_kg,
-      client_order = "", remarks = ""
-    }) {
-      return post("log_cutting", {
-        operator_name, machine, shift, source_extruder,
-        bag_size_cm, bags_produced, wastage_kg,
-        client_order, remarks,
-      });
+    getTallyData() {
+      return request('/api/tally/data');
     },
 
-    // ── Dispatch log ───────────────────────────────────────
-    logDispatch({
-      client, quantity, unit = "pcs",
-      vehicle_no, driver_name, challan_no,
-      gatekeeper, remarks = ""
-    }) {
-      return post("log_dispatch", {
-        client, quantity, unit,
-        vehicle_no, driver_name, challan_no,
-        gatekeeper, remarks,
-      });
+    syncTally() {
+      return request('/api/tally/sync', { method: 'POST' });
     },
 
-    // ── Attendance ─────────────────────────────────────────
-    markAttendance({ employee_name, role, machine, shift, status, in_time, out_time }) {
-      return post("mark_attendance", { employee_name, role, machine, shift, status, in_time, out_time });
+    // ── AI Assistant & Production Planner ───────────────────
+    aiChat(prompt, language = 'hinglish') {
+      return request('/api/ai/chat', { method: 'POST', body: JSON.stringify({ prompt, language }) });
     },
 
-    getAttendance(date = null) {
-      return get("get_attendance", date ? { date } : {});
+    aiPlan() {
+      return request('/api/ai/plan', { method: 'POST' });
     },
 
-    // ── Production log ─────────────────────────────────────
-    getProduction(date = null) {
-      return get("get_production", date ? { date } : {});
-    },
-
-    // ── Settings ───────────────────────────────────────────
+    // ── Settings & Archive ──────────────────────────────────
     getSettings() {
-      return get("get_settings");
+      return request('/api/settings');
     },
 
-    saveSettings(settingsObject) {
-      return post("save_settings", settingsObject);
+    saveSettings(payload) {
+      return request('/api/settings', { method: 'POST', body: JSON.stringify(payload) });
     },
+
+    archiveFY(fy_label, archived_by) {
+      return request('/api/archive', { method: 'POST', body: JSON.stringify({ fy_label, archived_by }) });
+    }
 
   };
 
-  // ============================================================
-  //  SECURE AI SETTINGS - Store in Google Sheets only
-  //  Never store API keys in localStorage
-  // ============================================================
-
-  // In api.js - Add these methods
-  async function saveAISettings(provider, apiKey, model, language) {
-    return post("save_ai_settings", {
-      provider: provider,
-      api_key: apiKey,  // This goes to Google Sheets, NOT localStorage
-      model: model,
-      language: language,
-      updated_by: currentUser?.name || "System",
-      updated_at: new Date().toISOString()
-    });
-  }
-
-  async function getAISettings() {
-    return get("get_ai_settings");
-  }
-
-  // Add to your Apps Script (Code.gs):
-  function saveAISettings(data) {
-    const sheet = getSheet("AI_Settings");
-    // Find or create row for each setting
-    const keys = ["provider", "api_key", "model", "language", "updated_by", "updated_at"];
-    for (const [key, value] of Object.entries(data)) {
-      if (keys.includes(key)) {
-        // Update or insert
-        updateSetting(sheet, key, value);
-      }
-    }
-    return { ok: true, message: "AI settings saved securely" };
-  }
-
-  function getAISettings() {
-    const sheet = getSheet("AI_Settings");
-    const data = sheet.getDataRange().getValues();
-    const settings = {};
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0]) settings[data[i][0]] = data[i][1];
-    }
-    return { ok: true, data: settings };
-  }
-
-  function updateSetting(sheet, key, value) {
-    const data = sheet.getDataRange().getValues();
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === key) {
-        sheet.getRange(i + 1, 2).setValue(value);
-        sheet.getRange(i + 1, 3).setValue(new Date());
-        return;
-      }
-    }
-    sheet.appendRow([key, value, new Date()]);
-  }
-
 })();
-
-// ============================================================
-//  USAGE EXAMPLES (copy-paste into your app code)
-// ============================================================
-
-/*
-// Log extrusion work (operator presses Save):
-const result = await API.logExtrusion({
-  operator_name:       "Ramesh Kumar",
-  machine:             "Extruder 1",
-  shift:               "Morning",
-  material:            "HDPE",
-  material_consumed_kg: 150,
-  output_weight_kg:    142,
-  width_mm:            600,
-  thickness_micron:    200,
-  wastage_kg:          8,
-  remarks:             "Bubble stable",
-});
-if (result.ok) showToast("Saved ✓");
-else showToast("Error: " + result.error);
-
-// Load dashboard on app open:
-const dash = await API.getDashboard();
-if (dash.ok) {
-  document.getElementById("extruded").textContent = dash.data.total_extruded_kg + " kg";
-  document.getElementById("bags").textContent     = dash.data.total_bags_cut;
-}
-
-// Log a dispatch:
-const dispatch = await API.logDispatch({
-  client:     "Cipla Ltd.",
-  quantity:   2400,
-  unit:       "pcs",
-  vehicle_no: "MP09AB1234",
-  driver_name:"Mohan Lal",
-  challan_no: "CH/2026/442",
-  gatekeeper: "Raju Singh",
-});
-
-// Save company settings:
-await API.saveSettings({
-  company_name: "PolyPack Industries",
-  gstin:        "23ABCDE1234F1Z8",
-  tally_ip:     "192.168.1.105",
-  tally_port:   "9000",
-});
-*/

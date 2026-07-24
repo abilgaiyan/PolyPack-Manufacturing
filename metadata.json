@@ -1,0 +1,8 @@
+{
+  "name": "PolyPack Manufacturing",
+  "description": "Manufacturing execution system (MES) and ERP helper app for PolyPack",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

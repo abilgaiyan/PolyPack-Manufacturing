@@ -1,0 +1,14 @@
+{
+  "name": "polypack-manufacturing",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "lint": "node -c server.js api.js",
+    "build": "echo 'No build required'"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
