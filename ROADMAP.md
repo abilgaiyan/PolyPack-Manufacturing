@@ -8,26 +8,25 @@ This document serves as the step-by-step engineering roadmap to transition the P
 
 The system is designed to evolve in versions, beginning with a local developer orchestration shell (.NET Aspire) and scaling up to multi-cloud deployment and AI integrations via Model Context Protocol (MCP).
 
-```
-
-mermaid
+```mermaid
 graph TB
-    subgraph Client Layer
+    subgraph ClientLayer["Client Layer"]
         Web[Web React Portal]
         Mobile[Mobile Expo App]
     end
 
-    subgraph API Gateway
+    subgraph APIGateway["API Gateway"]
         Gateway[YARP Gateway]
     end
 
-    Client Layer -->|HTTPS| Gateway
+    Web -->|HTTPS| Gateway
+    Mobile -->|HTTPS| Gateway
 
-    subgraph Version 1.0: Core Microservices & Aspire Orchestration
-        AuthSvc[Auth Service] --> AuthDB[(Auth DB: Postgres)]
-        ProdSvc[Production Service] --> ProdDB[(Prod DB: Postgres)]
-        InvSvc[Inventory Service] --> InvDB[(Inv DB: Postgres)]
-        AttSvc[Attendance Service] --> AttDB[(Att DB: Postgres)]
+    subgraph V10["Version 1.0 — Core Microservices & Aspire Orchestration"]
+        AuthSvc[Auth Service] --> AuthDB[(Auth DB Postgres)]
+        ProdSvc[Production Service] --> ProdDB[(Prod DB Postgres)]
+        InvSvc[Inventory Service] --> InvDB[(Inv DB Postgres)]
+        AttSvc[Attendance Service] --> AttDB[(Att DB Postgres)]
     end
 
     Gateway --> AuthSvc
@@ -35,43 +34,44 @@ graph TB
     Gateway --> InvSvc
     Gateway --> AttSvc
 
-    subgraph Version 1.5: Event-Driven & Tally Integration
+    subgraph V15["Version 1.5 — Event-Driven & Tally Integration"]
         Bus{RabbitMQ Event Bus}
-        ProdSvc -.->|Publish| Bus
-        Bus -.->|Consume| InvSvc
-        
-        TallySvc[Tally Service] --> TallyDB[(Tally DB: Postgres)]
-        TallyAgent[Tally Sync Agent - On-Premise LAN] -->|Sync Webhook| TallySvc
-        Bus -.->|Sync Events| ProdSvc
+        TallySvc[Tally Service] --> TallyDB[(Tally DB Postgres)]
+        TallyAgent[Tally Sync Agent On-Premise LAN] -->|Sync Webhook| TallySvc
     end
 
+    ProdSvc -.->|Publish| Bus
+    Bus -.->|Consume| InvSvc
+    Bus -.->|Sync Events| ProdSvc
     Gateway --> TallySvc
 
-    subgraph Version 2.0: Multi-Cloud Orchestration (AWS, GCP, Azure)
-        subgraph GCP Deployment
-            GKE[GCP: GKE / Cloud Run]
-            CloudSQL[GCP: Cloud SQL Postgres]
+    subgraph V20["Version 2.0 — Multi-Cloud Orchestration"]
+        subgraph GCP["GCP Deployment"]
+            GKE[GKE / Cloud Run]
+            CloudSQL[(Cloud SQL Postgres)]
         end
-        subgraph AWS Deployment
-            ECS[AWS: ECS / EKS]
-            RDS[AWS: RDS Postgres]
+        subgraph AWS["AWS Deployment"]
+            ECS[ECS / EKS]
+            RDS[(RDS Postgres)]
         end
-        subgraph Azure Deployment
-            ACA[Azure: Container Apps]
-            AzPostgres[Azure: Postgres Flexible Server]
+        subgraph AzureCloud["Azure Deployment"]
+            ACA[Azure Container Apps]
+            AzPostgres[(Azure Postgres Flexible Server)]
         end
     end
 
-    subgraph Version 3.0: Model Context Protocol (MCP) & AI Copilot
+    subgraph V30["Version 3.0 — MCP & AI Copilot"]
         AISvc[AI Assistant Service]
         MCPServer[PolyPack MCP Server]
-        LLM[LLMs: Claude/Cursor/Antigravity]
-        
+        LLM[LLMs Claude / GPT / Gemini]
+
         LLM -->|MCP Protocol| MCPServer
-        MCPServer -->|gRPC/REST| Gateway
-        AISvc -->|gRPC| ProdSvc & InvSvc & TallySvc
+        MCPServer -->|gRPC / REST| Gateway
     end
 
+    AISvc -->|gRPC| ProdSvc
+    AISvc -->|gRPC| InvSvc
+    AISvc -->|gRPC| TallySvc
     Gateway --> AISvc
 ```
 
