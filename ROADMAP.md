@@ -8,7 +8,9 @@ This document serves as the step-by-step engineering roadmap to transition the P
 
 The system is designed to evolve in versions, beginning with a local developer orchestration shell (.NET Aspire) and scaling up to multi-cloud deployment and AI integrations via Model Context Protocol (MCP).
 
-```mermaid
+```
+
+mermaid
 graph TB
     subgraph Client Layer
         Web[Web React Portal]
